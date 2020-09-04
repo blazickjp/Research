@@ -1,15 +1,15 @@
 
 ## Gibbs Sampling
 
-Gibbs sampling is a Markov Chain Monte Carlo (MCMC) method for sampling from a posterior distribution usually defined as $p(\theta|D)$. The idea behind the Gibbs Sampler is to sweep through each one of the parameters and sample from their conditional distributions, fixing the other parameters constant. For example, consider the random variables $X_1, X_2$ and assume that I can write out the analytic form of $`p(X_1|X_2,X_3), p(X_2|X_1,X_3), p(X_3|X_2,X_1)`$. We start by initializing $`x_{1,t}, x_{2,t}, x_{3,t}`$ and for each iteration $t$ we sample $`p(X_{1,t+1}|X_{2,t},X_{3,t})`$, $`p(X_{2,t+1}|X_{1,t+1},X_{3,t})$`, and $`p(X_{3,t+1}|X_{2,t+1},X_{3,t+1})`$. This process can then continue until convergence.
+Gibbs sampling is a Markov Chain Monte Carlo (MCMC) method for sampling from a posterior distribution usually defined as $p(\theta|D)$. The idea behind the Gibbs Sampler is to sweep through each one of the parameters and sample from their conditional distributions, fixing the other parameters constant. For example, consider the random variables $`X_1, X_2`$ and assume that I can write out the analytic form of $`p(X_1|X_2,X_3), p(X_2|X_1,X_3), p(X_3|X_2,X_1)`$. We start by initializing $`x_{1,t}, x_{2,t}, x_{3,t}`$ and for each iteration $t$ we sample $`p(X_{1,t+1}|X_{2,t},X_{3,t})`$, $`p(X_{2,t+1}|X_{1,t+1},X_{3,t})$`, and $`p(X_{3,t+1}|X_{2,t+1},X_{3,t+1})`$. This process can then continue until convergence.
 
 ## Mixture of Normals
 
 Now that we understand the ideas behind Gibbs Sampling, let's determine how we can use it to fit a mixture of 2 univariate gaussians. It can be very difficult to calculate the posterior under conjugate priods for a normal mixture model, so instead we can use a ${0,1}$ indicator variable $Z$ to make the calculations easier. 
 
-If we let $\theta_j = \{\mu_j,\sigma^2_j,\pi\}$ we see that the joint density: 
+If we let $`\theta_j = \{\mu_j,\sigma^2_j,\pi\}`$ we see that the joint density: 
 
-$$p(x, z; \theta) = p(x|z,\theta) p(z,\theta)$$
+$$`p(x, z; \theta) = p(x|z,\theta) p(z,\theta)`$$
 
 where: 
 $$p(x|z,\theta) = \phi_{\theta_1}(x)^{z_1}\phi_{\theta_2}(x)^{z_2}$$
