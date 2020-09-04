@@ -9,8 +9,9 @@ Now that we understand the ideas behind Gibbs Sampling, let's determine how we c
 
 If we let $`\theta_j = \{\mu_j,\sigma^2_j,\pi\}`$ we see that the joint density: 
 
+```math
 $$`p(x, z; \theta) = p(x|z,\theta) p(z,\theta)`$$
-
+```
 where: 
 $$p(x|z,\theta) = \phi_{\theta_1}(x)^{z_1}\phi_{\theta_2}(x)^{z_2}$$
 
