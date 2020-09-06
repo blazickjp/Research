@@ -1,2 +1,6 @@
 theme: jekyll-theme-minimal
+include: _includes/head.html
 markdown: kramdown
+kramdown:
+  math_engine: mathjax
+  syntax_highlighter: rouge
