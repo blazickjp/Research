@@ -1,10 +1,1 @@
-
-## Gibbs Sampling
-
-Gibbs sampling is a Markov Chain Monte Carlo (MCMC) method for sampling from a posterior distribution usually defined as 
-
-$$
-p(\theta|D)
-$$
-
-inline $x_2$
+you can use an inline formula $$\forall x \in R$$ like this one
