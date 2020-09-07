@@ -31,6 +31,8 @@ github_username:  blazickjp
 github: [metadata]
 # Build settings
 markdown: kramdown
+kramdown:
+  math_engine: katex
 theme: jekyll-theme-cayman
 plugins:
   - jekyll-feed
