@@ -12,10 +12,10 @@ description: > # this means to ignore newlines until "baseurl:"
   This is a Jekyll blog I started to get to know Jekyll better and
   document some interesting programming idea I ran into or just my thoughts
   about a topic. If I make a project, you can read about it also here.
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "csega.github.io" # the base hostname & protocol for your site
-twitter_username: Csega2
-github_username:  csega
+baseurl: "/Mixed-Univariate-Gaussians" # the subpath of your site, e.g. /blog
+url: "http://blazickjp.github.io" # the base hostname & protocol for your site
+twitter_username: 
+github_username:  blazickjp
 
 # Build settings
 markdown: kramdown
