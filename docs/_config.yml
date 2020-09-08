@@ -32,6 +32,8 @@ url: "http://blazickjp.github.io"
 twitter_username: jekyllrb
 github_username:  jekyll
 markdown: kramdown
+kramdown:
+  mathjax: true
 
 # Build settings
 theme: minima
