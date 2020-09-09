@@ -51,15 +51,14 @@ plt.title("Mixture of 2 Gaussians Data")
 plt.grid()
 plt.show()
 ```
-![svg](images/output_5_0.svg)
+
+![svg](/Mixed-Univariate-Gaussians/images/output_5_0.svg)
 
 It can be very difficult to calculate the posterior under conjugate priors for a normal mixture model, so instead we can use a ${0,1}$ indicator variable $Z$ to make the calculations easier. 
 
-If we let $\theta_j = \{\mu_j,\sigma^2_j,\pi\}$ we see that the joint density: 
+If we let $\theta_j = \{\mu_j,\sigma^2_j,\pi\}$ we see that the joint 
+density $p(x, z; \theta) = p(x|z,\theta) p(z,\theta)$ where: 
 
-$$p(x, z; \theta) = p(x|z,\theta) p(z,\theta)$$
-
-where: 
 $$p(x|z,\theta) = \phi_{\theta_1}(x)^{z_1}\phi_{\theta_2}(x)^{z_2}$$. And $p(z,\theta)$ comes from the multinomial distribution with density $\frac{n!}{x_1!x_2!}\pi_1^{z_1}\pi^{z_2}$. Because $z$ is an indicator variable, $\frac{n!}{x_1!x_2!} = 1$ so our second term is given by:
 
 $$
