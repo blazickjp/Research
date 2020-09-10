@@ -6,6 +6,27 @@ categories: mypost
 ---
 # Introduction
 
+<pre id="test-basics" style="display:none">
+    \begin{algorithm}
+    \caption{Test atoms}
+    \begin{algorithmic}
+    \STATE \textbf{Specials:} \{ \} \$ \& \# \% \_
+    \STATE \textbf{Bools:} \AND \OR \NOT \TRUE \FALSE
+    \STATE \textbf{Carriage return:} first line \\ second line
+    \STATE \textbf{Text-symbols:} \textbackslash
+    \STATE \textbf{Quote-symbols:} `single quotes', ``double quotes''
+    \STATE \textbf{Math:} $(\mathcal{C}_m)$, $i \gets i + 1$, $E=mc^2$, \( x^n + y^n = z^n \), $\$$, \(\$\)
+    \END{ALGORITHMIC}
+    \END{ALGORITHM}
+</pre>
+<script type="text/javascript">
+    var testBasics = document.getElementById("test-basics").textContent;
+    pseudocode.render(testBasics, document.body, {
+        lineNumber: false,
+    });
+</script>
+
+
 Yesterday I wrote about how to reference equations correctly with Microsoft Office 2013 and 2016. Today I'll write about how to set up MathJax, a beautiful equation rendering engine written in JavaScript, which handles LaTeX and MathML (and ASCIIMathML) to your Jekyll site on GitHub (and everywhere else on the Web of course). I found a handful of descriptions about it ([this][jekyll], [this][gastonsanchez] and [this][tobanwiebe] - [this][haixing-hu] could also be helpful), but those are not working for me. At the end, I got help from [here][pages-gem]. Thanks again, **hugomilan**! :)
 
 # How to do it?
