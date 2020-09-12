@@ -70,8 +70,9 @@ plt.title("Mixture of 2 Gaussians Data")
 plt.grid()
 plt.show()
 ```
-
+<span style="display:block;text-align:center">
 ![svg](/Mixed-Univariate-Gaussians/images/output_5_0.svg)
+</span>
 
 It can be very difficult to calculate the posterior under conjugate priors for a normal mixture model, so instead we can use a ${0,1}$ indicator variable $Z$ to make the calculations easier. 
 
@@ -134,6 +135,14 @@ p(\pi|x, z) & \sim Beta\left(\sum_{i=1}^Nz_1 + 1, \sum_{i=1}^Nz_2 + 1\right)
 \end{align*}
 $$
 
+```python
+def update_pi(N, n):
+    """
+    Sample from Posterior Conditional for pi
+    """
+    return beta(1+n, 1+(N-n))
+```
+
 Similarly we can work out the complete conditional for $\mu$.
 
 $$
@@ -167,7 +176,25 @@ p(\mu | x, z) & \sim N\left(\frac{\tilde{x_j}}{n_j + \sigma^2_j}, \frac{\sigma^2
 \end{align*}
 $$
 
-Moving on to $sigma^2$:
+Note that if we use the prior 
+$$p(\mu_j|\mu_0,\tau^2) = N(0, \sigma^2_j)$$ we get:
+
+$$
+\begin{align*}
+p(\mu | x, z) \sim N \left(\frac{\tilde{x_j}}{n_j + 1}, \frac{\sigma^2_j}{n_j + 1}\right)\\
+\end{align*}
+$$
+
+```python
+def update_mu(y, sigma):
+    """
+    Sample from Posterior Conditional for mu
+    """
+    n = len(y)
+    return normal(y.sum() / (n + 1), np.sqrt(sigma / (n + 1)))
+```
+
+Moving on to $\sigma^2$:
 
 $$
 \begin{align*}
@@ -187,6 +214,16 @@ $$
 \end{align*}
 $$
 
+```python
+def update_sigma(y, mu):
+    """
+    Sample from Posterior Conditional for sigma
+    """
+    alpha = (0.5 * len(y)) + 1
+    beta = (0.5 * np.square(y - mu).sum()) + 1
+    return InverseGamma(alpha, beta).rvs()
+```
+
 Next we get the updates for each $z_{i,j}$ simply using the rules of conditional probabilities:
 
 $$ 
@@ -197,3 +234,90 @@ p(z|\theta,x) & = \frac{p(\theta,x,z)}{p(\theta,x)} \\
 & = \frac{\pi_j\phi_{\theta_1}(x_i)}{\sum_{j=1}^K\pi_j\phi_{\theta_j}(x_i)}
 \end{align*} 
 $$
+
+```python
+def update_z(data: list, mu, sigma, pi):
+    """
+    Sample from latent variable Z according to likelihoods for class assignment
+    """
+    a = norm(mu[0], np.sqrt(sigma[0])).pdf(data) * pi
+    b = norm(mu[1], np.sqrt(sigma[1])).pdf(data) * pi
+    pi_i = a / (a + b)
+    return binomial(1, pi_i)
+```
+
+Finally, lets define our Gibbs Algorithm to fit our parameters to the data we generated earlier. Then we can extract our fitted params and see how well we fit the data.
+
+```python
+def gibbs(data, iters, burnin):
+    """
+    Run Gibb's Sampling for Mixture of 2 Gaussians. Initial States are sample from Priors
+    """
+    # Set initial guesses based on priors
+    mu = normal(0, 1, size=2)
+    pi = beta(1,1)
+    sigma = InverseGamma(1,1).rvs(size=2)
+    out = np.empty((iters, 5))
+
+    for i in range(iters):
+        # Update Parameters according to conditional posterior distributions
+        z1 = update_z(data, mu, sigma, pi)
+        pi = update_pi(len(data), len(data[z1==1]))
+        mu[0] = update_mu(data[z1 == 1], sigma[0])
+        mu[1] = update_mu(data[z1 == 0], sigma[1])
+        sigma[0] = update_sigma(data[z1 == 1], mu[0])
+        sigma[1] = update_sigma(data[z1 == 0], mu[1])
+
+        # Store Values to monitor trace
+        out[i, 0:2] = mu
+        out[i, 2:4] = np.sqrt(sigma)
+        out[i, 4] = pi
+    
+    return out[burnin:,:]
+
+trace = gibbs(y, 2000, 500)
+mu1 = np.round(np.mean(trace[:,0]),2)
+mu2 = np.round(np.mean(trace[:,1]),2)
+sigma1 = np.round(np.mean(trace[:,2]),2)
+sigma2 = np.round(np.mean(trace[:,3]),2)
+pi = np.round(np.mean(trace[:,4]),2)
+
+plt.hist(y, 30, density=True, alpha=0.5)
+plt.plot(x, norm(mu[0], sigmas[0]).pdf(x), color="red", label="Actual")
+plt.plot(x, norm(mu[1], sigmas[1]).pdf(x), color="red")
+plt.plot(x, norm(mu1, sigma1).pdf(x), color="blue", label="Fitted")
+plt.plot(x, norm(mu2, sigma2).pdf(x), color="blue")
+plt.title("Mixture of 2 Gaussians Data")
+plt.legend(loc="upper right")
+plt.grid()
+plt.show()
+```
+<span style="display:block;text-align:center">
+![svg](/Mixed-Univariate-Gaussians/images/output_7_0.svg)
+</span>
+
+And one of the largest benefits of fitting the parameters using bayesian methods is that we can plot the full posterior distributions over $\theta$, giving us uncertainty in our fit as well as our point estimates. The full posteriors can be plotted as follows:
+
+```python
+fig, axs = plt.subplots(5,2)
+x = range(trace.shape[0])
+params = ["mu 1", "mu 2", "sigma 1", "sigma 2", "Phi"]
+for i, v in enumerate(params):
+    y = trace[:,i]
+    axs[i,0].plot(x, y)
+    axs[i,0].set_title(v)
+    axs[i,1].hist(y, 30, density=True, alpha=0.5)
+    axs[i,1].set_title(v)
+    axs[i,0].grid()
+    axs[i,1].grid()
+
+fig.suptitle("Trace of Parameters", fontsize=25)
+fig.set_figheight(15)
+fig.set_figwidth(15)
+fig.subplots_adjust(hspace=1)
+fig.show()
+```
+
+<span style="display:block;text-align:center">
+![svg](/Mixed-Univariate-Gaussians/images/output_8_0.svg)
+</span>
