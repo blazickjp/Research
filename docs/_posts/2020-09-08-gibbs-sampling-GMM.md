@@ -7,7 +7,26 @@ categories: mypost
 ## Gibbs Sampling
 
 Gibbs sampling is a Markov Chain Monte Carlo method for sampling from a posterior distribution usually defined 
-as $p(\theta|data)$. The idea behind the Gibbs Sampler is to sweep through each one of the parameters and sample from their conditional distributions, fixing the other parameters constant. For example, consider the random variables $X_1, X_2, X_3$ and assume that I can write out the analytic form of $p(X_1|X_2,X_3), p(X_2|X_1,X_3), p(X_3|X_2,X_1)$ . We start by initializing $x_{1,t}, x_{2,t}, x_{3,t}$ and for each iteration $t$ we sample $p(X_{1,t+1}|X_{2,t},X_{3,t})$, $p(X_{2,t+1}|X_{1,t+1},X_{3,t})$, and $p(X_{3,t+1}|X_{2,t+1},X_{3,t+1})$. This process can then continue until convergence.
+as $p(\theta|data)$. The idea behind the Gibbs Sampler is to sweep through each one of the parameters and sample from their conditional distributions, fixing the other parameters constant. For example, consider the random variables $X_1, X_2, X_3$ and assume that I can write out the analytic form of $p(X_1|X_2,X_3), p(X_2|X_1,X_3), p(X_3|X_2,X_1)$ . We start by initializing $x_{1,t}, x_{2,t}, x_{3,t}$ and for each iteration $t$ we sample $p(X_{1,t+1}|X_{2,t},X_{3,t})$, $p(X_{2,t+1}|X_{1,t+1},X_{3,t})$, and $p(X_{3,t+1}|X_{2,t+1},X_{3,t+1})$. This process can then continue until convergence. Algorithm 1 details a general Gibbs Sampler.
+
+<pre id="gibbs" style="display:hidden;">
+    % This quicksort algorithm is extracted from Chapter 7, Introduction to Algorithms (3rd edition)
+    \begin{algorithm}
+    \caption{Gibbs Sampling}
+    \begin{algorithmic}
+    \STATE initialize $x_0 \sim q(x)$
+        \FOR{$i = 1, 2, ...$} 
+            \STATE $x_{1,i} \sim p(X_1 = x_1 | X_2 = x_{2,i-1}, X_3 = x_{3,i-1}, ..., X_k = x_{k,i-1})$
+            \STATE $x_{2,i} \sim p(X_2 = x_2 | X_1 = x_{1,i}, X_3 = x_{3,i-1}, ..., X_k = x_{k,i-1})$
+            \STATE $x_{3,i} \sim p(X_3 = x_3 | X_1 = x_{1,i}, X_2 = x_{2,i}, ..., X_k = x_{k,i-1})$
+
+        \ENDFOR
+    \end{algorithmic}
+    \end{algorithm}
+</pre>
+<script>
+    pseudocode.renderElement(document.getElementById("gibbs"));
+</script>
 
 ## Mixture of Normals
 
@@ -166,4 +185,15 @@ $$
 & \propto \left(\sigma^2_j\right)^{-\left(\frac{1}{2}n_j + 1\right) - 1}\exp\left[\frac{1 + \frac{1}{2}\sum_{i=1}^N(x-\mu_j)^2}{\sigma^2_j}\right]\\
 & \sim IG\left(\frac{1}{2}n_j + 1, 1 + \frac{1}{2}\sum_{i=1}^N(x-\mu_j)^2\right)
 \end{align*}
+$$
+
+Next we get the updates for each $z_{i,j}$ simply using the rules of conditional probabilities:
+
+$$ 
+\begin{align*} 
+p(z|\theta,x) & = \frac{p(\theta,x,z)}{p(\theta,x)} \\ 
+& =  \frac{p(x|z,\theta)p(z|\theta)p(\theta)}{p(x|\theta)p(\theta)}  \\ 
+& =  \frac{p(x|z,\theta)p(z|\theta)}{p(x|\theta)}  \\ 
+& = \frac{\pi_j\phi_{\theta_1}(x_i)}{\sum_{j=1}^K\pi_j\phi_{\theta_j}(x_i)}
+\end{align*} 
 $$
