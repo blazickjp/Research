@@ -12,7 +12,7 @@ description: > # this means to ignore newlines until "baseurl:"
   This is a Jekyll blog I started to keep track of work related to my Master's Thesis in Statistics.
 baseurl: "/Mixed-Univariate-Gaussians" # the subpath of your site, e.g. /blog
 url: "http://blazickjp.github.io" # the base hostname & protocol for your site
-twitter_username: 
+twitter_username: JoeBlazick
 github_username:  blazickjp
 includes: images/
 # Build settings
