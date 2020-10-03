@@ -15,4 +15,5 @@ url: "http://blazickjp.github.io" # the base hostname & protocol for your site
 twitter_username: JoeBlazick
 github_username:  blazickjp
 # Build settings
+# Testing
 markdown: kramdown
