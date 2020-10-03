@@ -29,4 +29,4 @@ url: "http://blazickjp.github.io"
 # (http://yourusername.github.io/repository-name)
 # and NOT your User repository (http://yourusername.github.io)
 # then add in the baseurl here, like this: "/repository-name"
-baseurl: "/Mixed-Univariate-Gaussians"
+baseurl: "/Thesis"

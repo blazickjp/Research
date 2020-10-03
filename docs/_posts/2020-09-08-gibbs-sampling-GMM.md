@@ -71,7 +71,7 @@ plt.grid()
 plt.show()
 ```
 <span style="display:block;text-align:center">
-![svg](/Mixed-Univariate-Gaussians/images/output_5_0.svg)
+![svg](/Thesis/images/output_5_0.svg)
 </span>
 
 It can be very difficult to calculate the posterior under conjugate priors for a normal mixture model, so instead we can use a ${0,1}$ indicator variable $Z$ to make the calculations easier. 
@@ -293,7 +293,7 @@ plt.grid()
 plt.show()
 ```
 <span style="display:block;text-align:center">
-![svg](/Mixed-Univariate-Gaussians/images/output_7_0.svg)
+![svg](/Thesis/images/output_7_0.svg)
 </span>
 
 And one of the largest benefits of fitting the parameters using bayesian methods is that we can plot the full posterior distributions over $\theta$, giving us uncertainty in our fit as well as our point estimates. The full posteriors can be plotted as follows:
@@ -319,5 +319,5 @@ fig.show()
 ```
 
 <span style="display:block;text-align:center">
-![svg](/Mixed-Univariate-Gaussians/images/output_8_0.svg)
+![svg](/Thesis/images/output_8_0.svg)
 </span>

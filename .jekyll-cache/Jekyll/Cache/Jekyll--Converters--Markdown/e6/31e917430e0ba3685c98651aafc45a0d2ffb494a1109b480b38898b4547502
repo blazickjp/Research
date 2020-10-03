@@ -1,0 +1,75 @@
+I"-<h1 id="introduction">Introduction</h1>
+
+<pre id="quicksort" style="display:hidden;">
+    % This quicksort algorithm is extracted from Chapter 7, Introduction to Algorithms (3rd edition)
+    \begin{algorithm}
+    \caption{Quicksort}
+    \begin{algorithmic}
+    \PROCEDURE{Quicksort}{$A, p, r$}
+        \IF{$p &lt; r$} 
+            \STATE $q = $ \CALL{Partition}{$A, p, r$}
+            \STATE \CALL{Quicksort}{$A, p, q - 1$}
+            \STATE \CALL{Quicksort}{$A, q + 1, r$}
+        \ENDIF
+    \ENDPROCEDURE
+    \PROCEDURE{Partition}{$A, p, r$}
+        \STATE $x = A[r]$
+        \STATE $i = p - 1$
+        \FOR{$j = p$ \TO $r - 1$}
+            \IF{$A[j] &lt; x$}
+                \STATE $i = i + 1$
+                \STATE exchange
+                $A[i]$ with $A[j]$
+            \ENDIF
+            \STATE exchange $A[i]$ with $A[r]$
+        \ENDFOR
+    \ENDPROCEDURE
+    \end{algorithmic}
+    \end{algorithm}
+</pre>
+<script>
+    pseudocode.renderElement(document.getElementById("quicksort"));
+</script>
+
+<p>Yesterday I wrote about how to reference equations correctly with Microsoft Office 2013 and 2016. Today I’ll write about how to set up MathJax, a beautiful equation rendering engine written in JavaScript, which handles LaTeX and MathML (and ASCIIMathML) to your Jekyll site on GitHub (and everywhere else on the Web of course). I found a handful of descriptions about it (<a href="https://jekyllrb.com/docs/extras/">this</a>, <a href="http://gastonsanchez.com/visually-enforced/opinion/2014/02/16/Mathjax-with-jekyll/">this</a> and <a href="http://tobanwiebe.com/blog/2016/02/mathjax-kramdown">this</a> - <a href="https://gist.github.com/maurizzzio/ec311235997fab7b2993">this</a> could also be helpful), but those are not working for me. At the end, I got help from <a href="https://github.com/github/pages-gem/issues/307">here</a>. Thanks again, <strong>hugomilan</strong>! :)</p>
+
+<h1 id="how-to-do-it">How to do it?</h1>
+<p>The recipe is simple.</p>
+
+<ul>
+  <li>
+    <p>Go to your _includes/head.html in your Jekyll folder structure.</p>
+  </li>
+  <li>
+    <p>Put the following code snippet there (before the &lt;/head&gt; tag).</p>
+  </li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-html" data-lang="html">       <span class="nt">&lt;head&gt;</span>
+       ...
+       <span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/x-mathjax-config"</span><span class="nt">&gt;</span> <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span> <span class="na">TeX</span><span class="p">:</span> <span class="p">{</span> <span class="na">equationNumbers</span><span class="p">:</span> <span class="p">{</span> <span class="na">autoNumber</span><span class="p">:</span> <span class="dl">"</span><span class="s2">all</span><span class="dl">"</span> <span class="p">}</span> <span class="p">}</span> <span class="p">});</span> <span class="nt">&lt;/script&gt;</span>
+       <span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/x-mathjax-config"</span><span class="nt">&gt;</span>
+         <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span>
+           <span class="na">tex2jax</span><span class="p">:</span> <span class="p">{</span>
+             <span class="na">inlineMath</span><span class="p">:</span> <span class="p">[</span> <span class="p">[</span><span class="dl">'</span><span class="s1">$</span><span class="dl">'</span><span class="p">,</span><span class="dl">'</span><span class="s1">$</span><span class="dl">'</span><span class="p">],</span> <span class="p">[</span><span class="dl">"</span><span class="se">\\</span><span class="s2">(</span><span class="dl">"</span><span class="p">,</span><span class="dl">"</span><span class="se">\\</span><span class="s2">)</span><span class="dl">"</span><span class="p">]</span> <span class="p">],</span>
+             <span class="na">processEscapes</span><span class="p">:</span> <span class="kc">true</span>
+           <span class="p">}</span>
+         <span class="p">});</span>
+       <span class="nt">&lt;/script&gt;</span>
+       <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"</span> <span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;&lt;/script&gt;</span>
+       <span class="nt">&lt;/head&gt;</span>
+    </code></pre></figure>
+
+<ul>
+  <li>
+    <p>And you are done! These three lines will do three things. It will allow you to use equations through the entire site, everywhere you want. The second thing is, that you can use equations with auto numbering using two dollar signs. For example, this equation <code>$$ E = m\cdot c^2 \label{eq:mc2}$$</code> will look like the equation below and you can refer to it as <code>\ref{eq:mc2}</code> (which will render to this: \ref{eq:mc2}).</p>
+
+\[E = M\cdot c^2 \label{eq:mc2}\]
+
+    <p>But you can use inline equations too (this is the third thing), with one dollar sign, like this: <code>$ J(x) = \int{L(t, x, \dot{x}) dt} \$</code>. The equation above will render to this: $ J(x) = \int{L(t, x, \dot{x}) dt} $.</p>
+  </li>
+</ul>
+
+<p>That’s all folks! (For today.)</p>
+
+:ET

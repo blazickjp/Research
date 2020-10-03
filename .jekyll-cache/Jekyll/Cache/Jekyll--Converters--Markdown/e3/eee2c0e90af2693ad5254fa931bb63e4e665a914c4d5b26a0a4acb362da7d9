@@ -1,0 +1,287 @@
+I"��<h2 id="gibbs-sampling">Gibbs Sampling</h2>
+
+<p>Gibbs sampling is a Markov Chain Monte Carlo method for sampling from a posterior distribution usually defined 
+as $p(\theta|data)$. The idea behind the Gibbs Sampler is to sweep through each one of the parameters and sample from their conditional distributions, fixing the other parameters constant. For example, consider the random variables $X_1, X_2, X_3$ and assume that I can write out the analytic form of $p(X_1|X_2,X_3), p(X_2|X_1,X_3), p(X_3|X_2,X_1)$ . We start by initializing $x_{1,t}, x_{2,t}, x_{3,t}$ and for each iteration $t$ we sample $p(X_{1,t+1}|X_{2,t},X_{3,t})$, $p(X_{2,t+1}|X_{1,t+1},X_{3,t})$, and $p(X_{3,t+1}|X_{2,t+1},X_{3,t+1})$. This process can then continue until convergence. Algorithm 1 details a general Gibbs Sampler.</p>
+
+<pre id="gibbs" style="display:hidden;">
+    % This quicksort algorithm is extracted from Chapter 7, Introduction to Algorithms (3rd edition)
+    \begin{algorithm}
+    \caption{Gibbs Sampling}
+    \begin{algorithmic}
+    \STATE initialize $x_0 \sim q(x)$
+        \FOR{$i = 1, 2, ...$} 
+            \STATE $x_{1,i} \sim p(X_1 = x_1 | X_2 = x_{2,i-1}, X_3 = x_{3,i-1}, ..., X_k = x_{k,i-1})$
+            \STATE $x_{2,i} \sim p(X_2 = x_2 | X_1 = x_{1,i}, X_3 = x_{3,i-1}, ..., X_k = x_{k,i-1})$
+            \STATE $x_{3,i} \sim p(X_3 = x_3 | X_1 = x_{1,i}, X_2 = x_{2,i}, ..., X_k = x_{k,i-1})$
+
+        \ENDFOR
+    \end{algorithmic}
+    \end{algorithm}
+</pre>
+<script>
+    pseudocode.renderElement(document.getElementById("gibbs"));
+</script>
+
+<h2 id="mixture-of-normals">Mixture of Normals</h2>
+
+<p>Now that we understand the ideas behind Gibbs Sampling, let’s determine how we can use it to fit a mixture of 2 univariate gaussians. Our model is defined by $p(x|\theta) = \pi\phi_{\theta_i}(x) + (1-\pi)\phi_{\theta_2}(x)$. This just means that we have some probability $\pi$ of taking our observation from $\phi_{\theta_1}(x)$ where \(\phi_{\theta_1}(x) \sim N(\mu_1, \sigma^2_1)\) and $(1-\pi)$ probability of coming 
+from $\phi_{\theta_2}(x)$ where $\phi_{\theta_2}(x) \sim N(\mu_2, \sigma^2_2)$. Using python we can show this as follows:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">from</span> <span class="nn">numpy.random</span> <span class="kn">import</span> <span class="n">binomial</span><span class="p">,</span> <span class="n">normal</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">multinomial</span>
+<span class="kn">import</span> <span class="nn">scipy.stats</span> <span class="k">as</span> <span class="n">st</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">invgamma</span><span class="p">,</span> <span class="n">norm</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">distcan</span> <span class="kn">import</span> <span class="n">InverseGamma</span>
+
+<span class="k">def</span> <span class="nf">data_gen</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigmas</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="s">"""
+    Generates samples from Mixture of 2 Gaussian Distributions
+    """</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">binomial</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ind</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">y</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sigmas</span><span class="p">[</span><span class="mi">0</span><span class="p">]).</span><span class="n">rvs</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">sigmas</span><span class="p">[</span><span class="mi">1</span><span class="p">]).</span><span class="n">rvs</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+<span class="c1"># Set Starting Parameters
+</span><span class="n">mu</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span>
+<span class="n">sigmas</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="n">phi</span> <span class="o">=</span> <span class="p">.</span><span class="mi">4</span>
+<span class="n">n</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">data_gen</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigmas</span><span class="o">=</span><span class="n">sigmas</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span><span class="mi">14</span><span class="p">)</span>
+
+<span class="c1"># Create Plot of Data 
+</span><span class="n">plt</span><span class="p">.</span><span class="n">hist</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sigmas</span><span class="p">[</span><span class="mi">0</span><span class="p">]).</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s">"red"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">sigmas</span><span class="p">[</span><span class="mi">1</span><span class="p">]).</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s">"blue"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Mixture of 2 Gaussians Data"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">grid</span><span class="p">()</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+<p><span style="display:block;text-align:center">
+<img src="/Thesis/images/output_5_0.svg" alt="svg" />
+</span></p>
+
+<p>It can be very difficult to calculate the posterior under conjugate priors for a normal mixture model, so instead we can use a ${0,1}$ indicator variable $Z$ to make the calculations easier.</p>
+
+<p>If we let $\theta_j = \{\mu_j,\sigma^2_j,\pi\}$ we see that the joint 
+density \(p(x, z; \theta) = p(x|z;\theta) p(z;\theta)\)
+where \(p(x|z;\theta) = \phi_{\theta_1}(x)^{z_1}\phi_{\theta_2}(x)^{z_2}\) and $p(z;\theta)$ comes from the multinomial distribution with density $\frac{n!}{x_1!x_2!}\pi_1^{z_1}\pi^{z_2}$. Because $z$ is an indicator variable, $\frac{n!}{x_1!x_2!} = 1$ so our second term is given by:</p>
+
+\[\begin{align*}
+p(z;\theta) &amp; = \pi^{z_1}(1-\pi)^{z_2}\\
+p(z;\theta) &amp; = \prod_{j=1}^K\pi_j^{z_j}
+\end{align*}\]
+
+<p>Which gives the full data likelihood:</p>
+
+\[p(x, z; \theta) = \prod_{i=1}^N\left[\pi\phi_{\theta_1}(x_i)\right]^{z_1}\left[(1-\pi)\phi_{\theta_2}(x_i)\right]^{z_2}\]
+
+<p>We can now define our prior distributions. We’ll use conjugate priors because they allow us to easily compute posterior distributions. We should also point out that the choice of prior hyper parameters can make our calculations easier as well. We define our priors over ${\mu_j,\sigma^2_j,\pi}$ as follows:</p>
+
+\[\begin{align*}
+p(\pi) &amp; \sim Beta(\alpha = 1, \beta = 1)\\
+p(\mu_j) &amp; \sim N(\mu_0 = 0, \tau^2 = 1)\\
+p(\sigma_j^2) &amp; \sim IG(\delta = 1, \psi = 1)
+\end{align*}\]
+
+<p>Plugging our hyperparameters directly into our densities we get the following prior distributions:</p>
+
+\[\begin{align*}
+p(\pi|\alpha,\beta) &amp; = \pi^{\alpha-1}(1-\pi)^{\beta-1}\\
+&amp; \propto const\\
+p(\mu_j|\mu_0,\tau^2) &amp; = \frac{1}{\sqrt{2\pi}}\exp\left[-\frac{(\mu_j - \mu_0)^2}{2\tau^2}\right]\\
+&amp; \propto \exp\left[-\frac{\mu_j^2}{2}\right]\\
+p(\sigma_j^2|\delta, \psi) &amp; = \left(\sigma^2_j\right)^{-\delta - 1}\exp\left[-\frac{\psi}{\sigma^2_j}\right]\\
+&amp; \propto \left(\sigma^2_j\right)^{-2}\exp\left[-\frac{1}{\sigma^2_j}\right]
+\end{align*}\]
+
+<p>Which leads to the posterior distribution over $\theta$:</p>
+
+\[\begin{align*}
+p(\theta|x,z) &amp; \propto p(x, z| \theta)p(\pi)\prod_{j=1}^k\left[p(\mu_j)p(\sigma_j^2)\right]\\
+&amp; \propto \prod_{i=1}^N\pi^{z_1}\phi_{\theta_1}(x_i)^{z_1}\prod_{i=1}^N(1-\pi)^{z_1}\phi_{\theta_2}(x_i)^{z_2}\prod_{j=1}^k\left[p(\mu_j)p(\sigma_j^2)\right]\\
+&amp; \propto \prod_{i=1}^N\pi^{z_1}\prod_{i=1}^N\pi^{z_2}\prod_{i=1}^N\phi_{\theta_1}(x_i)^{z_1}\prod_{i=1}^N\phi_{\theta_2}(x_i)^{z_2}\prod_{j=1}^K\exp\left[-\frac{\mu_j^2}{2}\right]\left(\sigma^2_j\right)^{-2}\exp\left[-\frac{1}{\sigma^2_j}\right]\\
+&amp; \propto \pi^{\sum_{i=1}^Nz_1}(1-\pi)^{\sum_{i=1}^Nz_2}\prod_{i=1}^N\prod_{j=1}^K\phi_{\theta_j}(x_i)^{z_j}\prod_{j=1}^K\exp\left[-\frac{\mu_j^2}{2}\right]\left(\sigma^2_j\right)^{-2}\exp\left[-\frac{1}{\sigma^2_j}\right]\\
+\end{align*}\]
+
+<p>Now that we can isolate our variables to solve for the complete conditionals. The easiest to see is the complete conditional for $\pi$.</p>
+
+\[\begin{align*}
+p(\pi|x, z) &amp; = \int_0^{\infty}\int_0^{\infty}p(\theta|x,z)d\mu d\sigma\\
+&amp; \propto \pi^{\sum_{i=1}^Nz_1 + 1 - 1}(1-\pi)^{\sum_{i=1}^Nz_2 + 1 - 1}\\
+p(\pi|x, z) &amp; \sim Beta\left(\sum_{i=1}^Nz_1 + 1, \sum_{i=1}^Nz_2 + 1\right) 
+\end{align*}\]
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">update_pi</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="s">"""
+    Sample from Posterior Conditional for pi
+    """</span>
+    <span class="k">return</span> <span class="n">beta</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="o">+</span><span class="p">(</span><span class="n">N</span><span class="o">-</span><span class="n">n</span><span class="p">))</span>
+</code></pre></div></div>
+
+<p>Similarly we can work out the complete conditional for $\mu$.</p>
+
+\[\begin{align*}
+p(\mu|x, z) &amp; = \int_0^{\infty}\int_0^{\infty}p(\theta|x,z)d\pi d\sigma\\
+&amp; \propto \prod_{n=1}^N\prod_{j=1}^K\phi_{\theta_j}(x_i)^{z_j}\prod_{j=1}^K\exp\left[-\frac{\mu_j^2}
+{2}\right]\\
+\end{align*}\]
+
+<p>We can stick with a singular instance of $\mu$ to simplify this a bit and get rid of the product over $K$ because we know that the calculation is going to be the same for all $\mu$.</p>
+
+\[\begin{align*}
+&amp; \propto \prod_{n=1}^N\phi_{\theta_1}(x_i)^{z_1}\exp\left[-\frac{\mu_1^2}{2}\right]\\
+&amp; \propto \exp\left[-\frac{\sum_{i=1}^Nz_{i1}(x_i - \mu_1)^2}{2\sigma_j^2} - \frac{\mu_1^2}{2}\right]\\
+&amp; \propto \exp\left[-\frac{\sum_{i=1}^Nz_{i1}x_i^2 - 2\mu_1x_iz_{i1} + z_{i1}\mu_1^2}{2\sigma_j^2} - \frac{\mu_1^2}{2}\right]\\
+p(\mu | x, z) &amp; \propto \exp\left[-\frac{\sum_{i=1}^Nz_{i1}x_i^2 - 2\mu_1x_iz_{i1} + z_{i1}\mu_1^2 + \sigma^2_j\mu_j^2}{2\sigma_j^2}\right]
+\end{align*}\]
+
+<p>Now let $\sum_{i=1}^Nz_{ij}x_i=\tilde{x_j}$ and $\sum_{i=1}^Nz_{ij}=n_j$. We can also see that the first 
+term $\sum_{i=1}^Nz_{i1}x_i^2$ does not depend on $\mu_j$ so this can be factored out and absorbed into the constant term. We’re going to need to complete the square here to isolate our normal parameters.</p>
+
+\[\begin{align*}
+p(\mu | x, z) &amp; \propto \exp\left[-\frac{2\tilde{x_j}\mu_j + (n_j + \sigma^2_j)\mu_j^2}{2\sigma_j^2}\right]\\
+&amp; \propto \exp\left[-(n_j + \sigma^2_j)\frac{\mu_j^2 + 2\left(\frac{\tilde{x_j}}{n_j + \sigma^2_j}\right)\mu_j - \left(\frac{\tilde{x_j}}{n_j + \sigma^2_j}\right)^2 + \left(\frac{\tilde{x_j}}{n_j + \sigma^2_j}\right)^2}{2\sigma_j^2}\right]\\
+&amp; \propto \exp\left[-(n_j + \sigma^2_j)\frac{\left(\mu_j - \frac{\tilde{x_j}}{n_j + \sigma^2_j}\right)^2}{2\sigma_j^2}\right]\\
+p(\mu | x, z) &amp; \sim N\left(\frac{\tilde{x_j}}{n_j + \sigma^2_j}, \frac{\sigma^2_j}{n_j + \sigma^2_j}\right)
+\end{align*}\]
+
+<p>Note that if we use the prior 
+\(p(\mu_j|\mu_0,\tau^2) = N(0, \sigma^2_j)\) we get:</p>
+
+\[\begin{align*}
+p(\mu | x, z) \sim N \left(\frac{\tilde{x_j}}{n_j + 1}, \frac{\sigma^2_j}{n_j + 1}\right)\\
+\end{align*}\]
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">update_mu</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+    <span class="s">"""
+    Sample from Posterior Conditional for mu
+    """</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">normal</span><span class="p">(</span><span class="n">y</span><span class="p">.</span><span class="nb">sum</span><span class="p">()</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sigma</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
+</code></pre></div></div>
+
+<p>Moving on to $\sigma^2$:</p>
+
+\[\begin{align*}
+p(\mu|x, z) &amp; = \int_0^{\infty}\int_0^{\infty}p(\theta|x,z)d\pi d\mu\\
+&amp; \propto \prod_{n=1}^N\prod_{j=1}^K\phi_{\theta_j}(x_i)^{z_j}\prod_{j=1}^K \left(\sigma^2_j\right)^{-2}\exp\left[-\frac{1}{\sigma^2_j}\right]
+\end{align*}\]
+
+<p>Again we can isolate to $j=1$ knowing that it’s the same for all $j$:</p>
+
+\[\begin{align*}
+&amp; \propto \prod_{n=1}^N\phi_{\theta_j}(x_i)^{z_j}\left(\sigma^2_j\right)^{-2}\exp\left[-\frac{1}{\sigma^2_j}\right]\\
+&amp; \propto \left(\sigma^2_j\right)^{-\frac{\left(\sum_{i=1}^Nz_{i,j}\right) -2 -2}{2}}\exp\left[-\frac{1}{\sigma^2_j}- \frac{\sum_{i=1}^N(x-\mu_j)^2}{2\sigma^2_j}\right]\\
+&amp; \propto \left(\sigma^2_j\right)^{-\left(\frac{1}{2}n_j + 1\right) - 1}\exp\left[\frac{1 + \frac{1}{2}\sum_{i=1}^N(x-\mu_j)^2}{\sigma^2_j}\right]\\
+&amp; \sim IG\left(\frac{1}{2}n_j + 1, 1 + \frac{1}{2}\sum_{i=1}^N(x-\mu_j)^2\right)
+\end{align*}\]
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">update_sigma</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">mu</span><span class="p">):</span>
+    <span class="s">"""
+    Sample from Posterior Conditional for sigma
+    """</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">square</span><span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">mu</span><span class="p">).</span><span class="nb">sum</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">InverseGamma</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">).</span><span class="n">rvs</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>Next we get the updates for each $z_{i,j}$ simply using the rules of conditional probabilities:</p>
+
+\[\begin{align*} 
+p(z|\theta,x) &amp; = \frac{p(\theta,x,z)}{p(\theta,x)} \\ 
+&amp; =  \frac{p(x|z,\theta)p(z|\theta)p(\theta)}{p(x|\theta)p(\theta)}  \\ 
+&amp; =  \frac{p(x|z,\theta)p(z|\theta)}{p(x|\theta)}  \\ 
+&amp; = \frac{\pi_j\phi_{\theta_1}(x_i)}{\sum_{j=1}^K\pi_j\phi_{\theta_j}(x_i)}
+\end{align*}\]
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">update_z</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">pi</span><span class="p">):</span>
+    <span class="s">"""
+    Sample from latent variable Z according to likelihoods for class assignment
+    """</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sigma</span><span class="p">[</span><span class="mi">0</span><span class="p">])).</span><span class="n">pdf</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">*</span> <span class="n">pi</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">np</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sigma</span><span class="p">[</span><span class="mi">1</span><span class="p">])).</span><span class="n">pdf</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">*</span> <span class="n">pi</span>
+    <span class="n">pi_i</span> <span class="o">=</span> <span class="n">a</span> <span class="o">/</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">binomial</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Finally, lets define our Gibbs Algorithm to fit our parameters to the data we generated earlier. Then we can extract our fitted params and see how well we fit the data.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">gibbs</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">iters</span><span class="p">,</span> <span class="n">burnin</span><span class="p">):</span>
+    <span class="s">"""
+    Run Gibb's Sampling for Mixture of 2 Gaussians. Initial States are sample from Priors
+    """</span>
+    <span class="c1"># Set initial guesses based on priors
+</span>    <span class="n">mu</span> <span class="o">=</span> <span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">pi</span> <span class="o">=</span> <span class="n">beta</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">InverseGamma</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">).</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">empty</span><span class="p">((</span><span class="n">iters</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iters</span><span class="p">):</span>
+        <span class="c1"># Update Parameters according to conditional posterior distributions
+</span>        <span class="n">z1</span> <span class="o">=</span> <span class="n">update_z</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">pi</span><span class="p">)</span>
+        <span class="n">pi</span> <span class="o">=</span> <span class="n">update_pi</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">z1</span><span class="o">==</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">mu</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">update_mu</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">z1</span> <span class="o">==</span> <span class="mi">1</span><span class="p">],</span> <span class="n">sigma</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">mu</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">update_mu</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">z1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">],</span> <span class="n">sigma</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">sigma</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">update_sigma</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">z1</span> <span class="o">==</span> <span class="mi">1</span><span class="p">],</span> <span class="n">mu</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">sigma</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">update_sigma</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">z1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">],</span> <span class="n">mu</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># Store Values to monitor trace
+</span>        <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">mu</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">pi</span>
+    
+    <span class="k">return</span> <span class="n">out</span><span class="p">[</span><span class="n">burnin</span><span class="p">:,:]</span>
+
+<span class="n">trace</span> <span class="o">=</span> <span class="n">gibbs</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
+<span class="n">mu1</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">trace</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]),</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">mu2</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">trace</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]),</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">sigma1</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">trace</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]),</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">sigma2</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">trace</span><span class="p">[:,</span><span class="mi">3</span><span class="p">]),</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">pi</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">trace</span><span class="p">[:,</span><span class="mi">4</span><span class="p">]),</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">hist</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sigmas</span><span class="p">[</span><span class="mi">0</span><span class="p">]).</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s">"red"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"Actual"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">sigmas</span><span class="p">[</span><span class="mi">1</span><span class="p">]).</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s">"red"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="n">mu1</span><span class="p">,</span> <span class="n">sigma1</span><span class="p">).</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s">"blue"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">"Fitted"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="n">mu2</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">).</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s">"blue"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Mixture of 2 Gaussians Data"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s">"upper right"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">grid</span><span class="p">()</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+<p><span style="display:block;text-align:center">
+<img src="/Thesis/images/output_7_0.svg" alt="svg" />
+</span></p>
+
+<p>And one of the largest benefits of fitting the parameters using bayesian methods is that we can plot the full posterior distributions over $\theta$, giving us uncertainty in our fit as well as our point estimates. The full posteriors can be plotted as follows:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">trace</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="s">"mu 1"</span><span class="p">,</span> <span class="s">"mu 2"</span><span class="p">,</span> <span class="s">"sigma 1"</span><span class="p">,</span> <span class="s">"sigma 2"</span><span class="p">,</span> <span class="s">"Phi"</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">trace</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">].</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">].</span><span class="n">set_title</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">].</span><span class="n">hist</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">].</span><span class="n">set_title</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">].</span><span class="n">grid</span><span class="p">()</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">].</span><span class="n">grid</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="p">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s">"Trace of Parameters"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">.</span><span class="n">set_figheight</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">.</span><span class="n">set_figwidth</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><span style="display:block;text-align:center">
+<img src="/Thesis/images/output_8_0.svg" alt="svg" />
+</span></p>
+:ET
