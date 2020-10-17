@@ -28,7 +28,8 @@ In my previous post, I derived a Gibbs Sampler for a univariate Gaussian Mixture
 
 ## K-Dimensional GMM
 
-The K-Dimensional GMM can be defined as $p(x|\theta) = \sum_{j=1}^K\pi_j\phi_{\theta_j}(x)$. This model assumes that $K$ is known, so let's set $K=4$ and generate some data.
+The K-Dimensional GMM can be defined as $p(x|\theta) = \sum_{j=1}^K\pi_j\phi_{\theta_j}(x)$. This model assumes 
+that $K$ is known, so let's set $K=4$ and generate some data.
 
 ```python
 import numpy as np
