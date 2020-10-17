@@ -1,13 +1,12 @@
 ---
 layout: post
-title:  "Deriving Complete Conditionals for GMM Gibbs Sampler"
+title:  "Extending GMM Gibbs Sampler to K-Dimensions"
 categories: mypost
 ---
 
-## Gibbs Sampling
+## Introduction
 
-Gibbs sampling is a Markov Chain Monte Carlo method for sampling from a posterior distribution usually defined 
-as $p(\theta|data)$. The idea behind the Gibbs Sampler is to sweep through each one of the parameters and sample from their conditional distributions, fixing the other parameters constant. For example, consider the random variables $X_1, X_2, X_3$ and assume that I can write out the analytic form of $p(X_1|X_2,X_3), p(X_2|X_1,X_3), p(X_3|X_2,X_1)$ . We start by initializing $x_{1,t}, x_{2,t}, x_{3,t}$ and for each iteration $t$ we sample $p(X_{1,t+1}|X_{2,t},X_{3,t})$, $p(X_{2,t+1}|X_{1,t+1},X_{3,t})$, and $p(X_{3,t+1}|X_{2,t+1},X_{3,t+1})$. This process can then continue until convergence. Algorithm 1 details a general Gibbs Sampler.
+In my previous post, I derived a Gibbs Sampler for a univariate Gaussian Mixture Model (GMM). In this post I will extend the sampler to handle the K-dimensional univariate GMM. As a quick reminder, Gibbs Sampling is a MCMC method for sampling from multivariate distributions that may be difficult to sample from directly. The method is commonly used in bayesian inference when sampling the the posterior or joint distribution in question. The samples generated converge to the desired distribution when the number of samples is large. The complete algorithm is given below.
 
 <pre id="gibbs" style="display:hidden;">
     \begin{algorithm}
@@ -27,16 +26,15 @@ as $p(\theta|data)$. The idea behind the Gibbs Sampler is to sweep through each 
     pseudocode.renderElement(document.getElementById("gibbs"));
 </script>
 
-## Mixture of Normals
+## K-Dimensional GMM
 
-Now that we understand the ideas behind Gibbs Sampling, let's determine how we can use it to fit a mixture of 2 univariate gaussians. Our model is defined by $p(x|\theta) = \pi\phi_{\theta_i}(x) + (1-\pi)\phi_{\theta_2}(x)$. This just means that we have some probability $\pi$ of taking our observation from $\phi_{\theta_1}(x)$ where $$\phi_{\theta_1}(x) \sim N(\mu_1, \sigma^2_1)$$ and $(1-\pi)$ probability of coming 
-from $\phi_{\theta_2}(x)$ where $\phi_{\theta_2}(x) \sim N(\mu_2, \sigma^2_2)$. Using python we can show this as follows:
+The K-Dimensional GMM can be defined as $p(x|\theta) = \sum_{j=1}^K\pi_j\phi_{\theta_j}(x)$. This model assumes that $K$ is known, so let's set $K=4$ and generate some data.
 
 ```python
 import numpy as np
 from numpy.random import binomial, normal, beta, multinomial
 import scipy.stats as st
-from scipy.stats import invgamma, norm
+from scipy.stats import invgamma, norm, dirichlet
 import matplotlib.pyplot as plt
 from distcan import InverseGamma
 
@@ -46,25 +44,28 @@ def data_gen(mu, sigmas, phi, n):
     """
     y = []
     for i in range(n):
-        ind = binomial(1, phi, 1)
-        if ind == 1:
-            y.append(norm(mu[0], sigmas[0]).rvs())
-        else:
-            y.append(norm(mu[1], sigmas[1]).rvs())
+        ind = multinomial(1, phi)
+        for j, val in enumerate(ind):
+            if val == 1:
+                y.append(norm(mu[j], sigmas[j]).rvs())
+            else:
+                next
     return np.array(y)
 
 # Set Starting Parameters
-mu = [0, 8]
-sigmas = [1, 3]
-phi = .4
-n = 500
+mu = [0,4,8,16]
+sigmas = [1,1,2,3]
+phi = [.2,.2,.2,.4]
+n = 2000
 y = data_gen(mu=mu, sigmas=sigmas, phi=phi, n=n)
-x = np.linspace(-3,14)
+x = np.linspace(-3,25)
 
 # Create Plot of Data 
 plt.hist(y, 30, density=True, alpha=0.5)
 plt.plot(x, norm(mu[0], sigmas[0]).pdf(x), color="red")
 plt.plot(x, norm(mu[1], sigmas[1]).pdf(x), color="blue")
+plt.plot(x, norm(mu[2], sigmas[2]).pdf(x), color="green")
+plt.plot(x, norm(mu[3], sigmas[3]).pdf(x), color="yellow")
 plt.title("Mixture of 2 Gaussians Data")
 plt.grid()
 plt.show()
