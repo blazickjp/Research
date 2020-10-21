@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Deriving Complete Conditionals for GMM Gibbs Sampler"
+title:  "Deriving Complete Conditionals for GMM Gibbs Sampling"
 categories: mypost
 ---
 

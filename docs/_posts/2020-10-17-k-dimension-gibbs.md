@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Extending GMM Gibbs Sampler to K-Dimensions"
+title:  "Extending GMM Gibbs Sampling to K-Dimensions"
 categories: mypost
 ---
 
