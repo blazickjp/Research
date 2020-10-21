@@ -300,5 +300,5 @@ fig.show()
 ```
 
 <span style="display:block;text-align:center">
-![svg](/Thesis/images/k4_Trace.svg)
+![svg](/Thesis/images/k4_trace.svg)
 </span>
