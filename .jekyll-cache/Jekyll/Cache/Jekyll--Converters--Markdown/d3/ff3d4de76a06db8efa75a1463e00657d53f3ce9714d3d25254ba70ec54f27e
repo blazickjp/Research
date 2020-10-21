@@ -1,10 +1,8 @@
-I"¢‘<h2 id="gibbs-sampling">Gibbs Sampling</h2>
+I"1•<h2 id="introduction">Introduction</h2>
 
-<p>Gibbs sampling is a Markov Chain Monte Carlo method for sampling from a posterior distribution usually defined 
-as $p(\theta|data)$. The idea behind the Gibbs Sampler is to sweep through each one of the parameters and sample from their conditional distributions, fixing the other parameters constant. For example, consider the random variables $X_1, X_2, X_3$ and assume that I can write out the analytic form of $p(X_1|X_2,X_3), p(X_2|X_1,X_3), p(X_3|X_2,X_1)$ . We start by initializing $x_{1,t}, x_{2,t}, x_{3,t}$ and for each iteration $t$ we sample $p(X_{1,t+1}|X_{2,t},X_{3,t})$, $p(X_{2,t+1}|X_{1,t+1},X_{3,t})$, and $p(X_{3,t+1}|X_{2,t+1},X_{3,t+1})$. This process can then continue until convergence. Algorithm 1 details a general Gibbs Sampler.</p>
+<p>In my previous post, I derived a Gibbs Sampler for a univariate Gaussian Mixture Model (GMM). In this post I will extend the sampler to handle the K-dimensional univariate GMM. As a quick reminder, Gibbs Sampling is a MCMC method for sampling from multivariate distributions that may be difficult to sample from directly. The method is commonly used in bayesian inference when sampling the the posterior or joint distribution in question. The samples generated converge to the desired distribution when the number of samples is large. The complete algorithm is given below.</p>
 
 <pre id="gibbs" style="display:hidden;">
-    % This quicksort algorithm is extracted from Chapter 7, Introduction to Algorithms (3rd edition)
     \begin{algorithm}
     \caption{Gibbs Sampling}
     \begin{algorithmic}
@@ -22,15 +20,21 @@ as $p(\theta|data)$. The idea behind the Gibbs Sampler is to sweep through each 
     pseudocode.renderElement(document.getElementById("gibbs"));
 </script>
 
-<h2 id="mixture-of-normals">Mixture of Normals</h2>
+<h2 id="k-dimensional-gmm">K-Dimensional GMM</h2>
 
-<p>Now that we understand the ideas behind Gibbs Sampling, letâ€™s determine how we can use it to fit a mixture of 2 univariate gaussians. Our model is defined by $p(x|\theta) = \pi\phi_{\theta_i}(x) + (1-\pi)\phi_{\theta_2}(x)$. This just means that we have some probability $\pi$ of taking our observation from $\phi_{\theta_1}(x)$ where \(\phi_{\theta_1}(x) \sim N(\mu_1, \sigma^2_1)\) and $(1-\pi)$ probability of coming 
-from $\phi_{\theta_2}(x)$ where $\phi_{\theta_2}(x) \sim N(\mu_2, \sigma^2_2)$. Using python we can show this as follows:</p>
+<p>The K-Dimensional GMM can be defined as $p(x|\theta) = \sum_{j=1}^K\pi_j\phi_{\theta_j}(x)$. This model assumes 
+that $K$ is known, so letâ€™s set $K=4$ and generate some data with the following parameters:</p>
+
+\[\begin{align*}
+\pi &amp; = \{.2,.2,.2,.4\}\\
+\mu &amp; = \{0,4,8,16\}\\
+\sigma &amp; = \{1,1,2,3\}
+\end{align*}\]
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
 <span class="kn">from</span> <span class="nn">numpy.random</span> <span class="kn">import</span> <span class="n">binomial</span><span class="p">,</span> <span class="n">normal</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">multinomial</span>
 <span class="kn">import</span> <span class="nn">scipy.stats</span> <span class="k">as</span> <span class="n">st</span>
-<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">invgamma</span><span class="p">,</span> <span class="n">norm</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">invgamma</span><span class="p">,</span> <span class="n">norm</span><span class="p">,</span> <span class="n">dirichlet</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 <span class="kn">from</span> <span class="nn">distcan</span> <span class="kn">import</span> <span class="n">InverseGamma</span>
 
@@ -40,43 +44,41 @@ from $\phi_{\theta_2}(x)$ where $\phi_{\theta_2}(x) \sim N(\mu_2, \sigma^2_2)$. 
     """</span>
     <span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
-        <span class="n">ind</span> <span class="o">=</span> <span class="n">binomial</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">ind</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">y</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sigmas</span><span class="p">[</span><span class="mi">0</span><span class="p">]).</span><span class="n">rvs</span><span class="p">())</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">y</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">sigmas</span><span class="p">[</span><span class="mi">1</span><span class="p">]).</span><span class="n">rvs</span><span class="p">())</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">multinomial</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ind</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">val</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">y</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">sigmas</span><span class="p">[</span><span class="n">j</span><span class="p">]).</span><span class="n">rvs</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">next</span>
     <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
 
 <span class="c1"># Set Starting Parameters
-</span><span class="n">mu</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span>
-<span class="n">sigmas</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
-<span class="n">phi</span> <span class="o">=</span> <span class="p">.</span><span class="mi">4</span>
-<span class="n">n</span> <span class="o">=</span> <span class="mi">500</span>
+</span><span class="n">mu</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">16</span><span class="p">]</span>
+<span class="n">sigmas</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span>
+<span class="n">phi</span> <span class="o">=</span> <span class="p">[.</span><span class="mi">2</span><span class="p">,.</span><span class="mi">2</span><span class="p">,.</span><span class="mi">2</span><span class="p">,.</span><span class="mi">4</span><span class="p">]</span>
+<span class="n">n</span> <span class="o">=</span> <span class="mi">2000</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">data_gen</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigmas</span><span class="o">=</span><span class="n">sigmas</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span><span class="mi">25</span><span class="p">)</span>
 
 <span class="c1"># Create Plot of Data 
 </span><span class="n">plt</span><span class="p">.</span><span class="n">hist</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sigmas</span><span class="p">[</span><span class="mi">0</span><span class="p">]).</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s">"red"</span><span class="p">)</span>
 <span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">sigmas</span><span class="p">[</span><span class="mi">1</span><span class="p">]).</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s">"blue"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">sigmas</span><span class="p">[</span><span class="mi">2</span><span class="p">]).</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s">"green"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">sigmas</span><span class="p">[</span><span class="mi">3</span><span class="p">]).</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s">"yellow"</span><span class="p">)</span>
 <span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Mixture of 2 Gaussians Data"</span><span class="p">)</span>
 <span class="n">plt</span><span class="p">.</span><span class="n">grid</span><span class="p">()</span>
 <span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
 </code></pre></div></div>
 <p><span style="display:block;text-align:center">
-<img src="/Thesis/images/output_5_0.svg" alt="svg" />
+<img src="/Thesis/images/k4_datagen.svg" alt="svg" />
 </span></p>
 
-<p>It can be very difficult to calculate the posterior under conjugate priors for a normal mixture model, so instead we can use a ${0,1}$ indicator variable $Z$ to make the calculations easier.</p>
+<h2 id="the-dirichlet-distribution">The Dirichlet Distribution</h2>
 
-<p>If we let $\theta_j = \{\mu_j,\sigma^2_j,\pi\}$ we see that the joint 
-density \(p(x, z; \theta) = p(x|z;\theta) p(z;\theta)\)
-where \(p(x|z;\theta) = \phi_{\theta_1}(x)^{z_1}\phi_{\theta_2}(x)^{z_2}\) and $p(z;\theta)$ comes from the multinomial distribution with density $\frac{n!}{x_1!x_2!}\pi_1^{z_1}\pi^{z_2}$. Because $z$ is an indicator variable, $\frac{n!}{x_1!x_2!} = 1$ so our second term is given by:</p>
+<p>Now that we are sampling from more than 2 gaussians, we need a distribution to define over $p(\pi)$ that generalizes to more than 2 groups. Recall that when we were using $K=2$, we had used the beta distribution. The multivariate generalization of the beta distribution is known as the Dirichlet distribution, often written as $Dir(\pmb{\alpha})$ where $\pmb{\alpha}$ is a vector of positive reals. The full Dirichlet distribution is defined as:</p>
 
-\[\begin{align*}
-p(z;\theta) &amp; = \pi^{z_1}(1-\pi)^{z_2}\\
-p(z;\theta) &amp; = \prod_{j=1}^K\pi_j^{z_j}
-\end{align*}\]
+\[p(\pi_1, ..., \pi_k | \pmb{\alpha}) = \frac{\Gamma\left(\sum_{j=1}^K\alpha_j\right)}{\prod_{j=1}^k\Gamma(\alpha_j)}\prod_{j=1}^K\pi_j^{\alpha_j-1}\]
 
 <p>Which gives the full data likelihood:</p>
 
