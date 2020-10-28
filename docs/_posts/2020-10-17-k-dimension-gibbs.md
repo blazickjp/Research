@@ -104,7 +104,7 @@ distribution $p(\pi) \sim Beta(\alpha = 1, \beta = 1)$. We were using the beta d
 
 $$
 \begin{align*}
-p(\pi) & \sim Dir(\pmb{\alpha})\\
+p(\pmb{\pi}) & \sim Dir(\pmb{\alpha})\\
 p(\mu_j) & \sim N(\mu_0 = 0, \tau^2 = 1)\\
 p(\sigma_j^2) & \sim IG(\delta = 1, \psi = 1)
 \end{align*}
@@ -114,7 +114,7 @@ We've already defined the posterior over $\theta$ when $K=2$ and $p(\pi) \sim Be
 
 $$
 \begin{align*}
-p(\theta|x,z) & \propto p(x, z| \theta)p(\pi)\prod_{j=1}^k\left[p(\mu_j)p(\sigma_j^2)\right]\\
+p(\theta|x,z) & \propto p(x, z| \theta)p(\pmb{\pi})\prod_{j=1}^k\left[p(\mu_j)p(\sigma_j^2)\right]\\
 & \propto \color{green}{\pi^{\sum_{i=1}^Nz_1}(1-\pi)^{\sum_{i=1}^Nz_2}} \prod_{i=1}^N\prod_{j=1}^K\phi_{\theta_j}(x_i)^{z_j}\prod_{j=1}^K\exp\left[-\frac{\mu_j^2}{2}\right]\left(\sigma^2_j\right)^{-2}\exp\left[-\frac{1}{\sigma^2_j}\right]\\
 \end{align*}
 $$
