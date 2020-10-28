@@ -1,12 +1,12 @@
 ---
 layout: post
-title:  "Extending GMM Gibbs Sampling to K-Dimensions"
+title:  "Extending GMM Gibbs Sampling to K-Components"
 categories: mypost
 ---
 
 ## Introduction
 
-In my previous post, I derived a Gibbs Sampler for a univariate Gaussian Mixture Model (GMM). In this post I will extend the sampler to handle the K-dimensional univariate GMM. As a quick reminder, Gibbs Sampling is a MCMC method for sampling from multivariate distributions that may be difficult to sample from directly. The method is commonly used in bayesian inference when sampling the the posterior or joint distribution in question. The samples generated converge to the desired distribution when the number of samples is large. The complete algorithm is given below.
+In my previous post, I derived a Gibbs Sampler for a univariate Gaussian Mixture Model (GMM). In this post I will extend the sampler to handle the K-Component univariate GMM. As a quick reminder, Gibbs Sampling is a MCMC method for sampling from multivariate distributions that may be difficult to sample from directly. The method is commonly used in bayesian inference when sampling the the posterior or joint distribution in question. The samples generated from the Markov chain will converge to the desired distribution when $N$ is large. The complete algorithm is given below.
 
 <pre id="gibbs" style="display:hidden;">
     \begin{algorithm}
@@ -26,9 +26,9 @@ In my previous post, I derived a Gibbs Sampler for a univariate Gaussian Mixture
     pseudocode.renderElement(document.getElementById("gibbs"));
 </script>
 
-## K-Dimensional GMM
+## K-Component GMM
 
-The K-Dimensional GMM can be defined as $p(x|\theta) = \sum_{j=1}^K\pi_j\phi_{\theta_j}(x)$. This model assumes 
+The K-Component GMM can be defined as $p(x|\theta) = \sum_{j=1}^K\pi_j\phi_{\theta_j}(x)$. This model assumes 
 that $K$ is known, so let's set $K=4$ and generate some data with the following parameters:
 
 $$
@@ -49,7 +49,7 @@ from distcan import InverseGamma
 
 def data_gen(mu, sigmas, phi, n):
     """
-    Generates samples from Mixture of 2 Gaussian Distributions
+    Generates samples from Mixture of K Gaussian Distributions
     """
     y = []
     for i in range(n):
