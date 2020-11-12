@@ -108,8 +108,12 @@ which leads to the conditional density
 $$
 \begin{align*}
 p(\mu_j, \Sigma_j | z, x, \pi) & \propto \prod_{i=1}^N\phi_{\theta_j}(x_i)^{z_j}\left|\Sigma_j\right|^{-\frac{v_j + d}{2}-1}\exp\left(-\frac{1}{2}tr(\Lambda_j\Sigma_j^{-1})- \frac{\kappa_j}{2}(\mu_j - \xi_j)^T\Sigma_j^{-1}(\mu_j - \xi_j)\right)\\
+& \propto \sum_{i=1}^N log(\phi_{\theta_j}(x_i)^{z_ij})\\
+& \propto \sum_{i=1}^N z_{ij}log\phi_{\theta_j}(x_i)\\
 & \propto \prod_{i=1}^N\left|\Sigma_j\right|^{-\frac{1}{2}}\exp\left(-\frac{1}{2}(x_i-\bar{x})^T\Sigma^{-1}(x_i-\bar{x})\right)\left|\Sigma_j\right|^{-\frac{v_j + d}{2}-1}\exp\left(-\frac{1}{2}tr(\Lambda_j\Sigma_j^{-1})- \frac{\kappa_j}{2}(\bar{x} - \xi_j)^T\Sigma_j^{-1}(\bar{x} - \xi_j)\right)\\
-& \propto \left|\Sigma_j\right|^{-\frac{n+d+v_j}{2}-1}\exp\left(-\frac{n_j}{2}tr(\Sigma_j^{-1}S)\right)
+& \propto \prod_{i=1}^N\left|\Sigma_j\right|^{-\frac{d+v_j}{2}-1}\exp\left(-\frac{1}{2}(x_i-\bar{x})^T\Sigma^{-1}(x_i-\bar{x}) - \frac{\kappa_j}{2}(\bar{x} - \xi_j)^T\Sigma_j^{-1}(\bar{x} - \xi_j) - \frac{1}{2}tr(\Lambda_j\Sigma_j^{-1})\right)\\
+p(\Sigma_j | \mu_j, z, x, \pi) & \propto \left|\Sigma_j\right|^{-\frac{n+d+v_j}{2}-1}\exp\left(-\frac{1}{2}tr(\Sigma_j^{-1}S) - \frac{1}{2}tr(\Lambda_j\Sigma_j^{-1}) - \frac{\kappa_j}{2}tr(\Sigma_j^{-1}G)\right)\\
+& \propto \left|\Sigma_j\right|^{-\frac{n+d+v_j}{2}-1}\exp\left(-\frac{1}{2}tr\left(\Sigma_j^{-1}\left(\Lambda_j + S + \kappa_j G\right)\right)\right)\\
 \end{align*}
 $$
 
@@ -117,10 +121,10 @@ This results in simply multiplying our joint prior density with a multivariate n
 
 $$
 \begin{align*}
-\mu_n & = \frac{\kappa_j}{\kappa_j + n_j}\xi_j + \frac{n_j}{\kappa_j + n_j}\bar{x}\\
+\mu_n & = \frac{\kappa_j}{\kappa_j + n_j}\xi_j + \frac{n_j}{\kappa_j + n_j}\bar{x}_j\\
 \kappa_n & = \kappa_j + n_j\\
 v_n & = v_j + n_j\\
-\Lambda_n & = \Lambda_j + \sum_{i=1}^N(x_i - \bar{x})(x_i - \bar{x})^T + \frac{n_j\kappa_j}{\kappa_j + n_j}(\bar{x} - \xi_j)(\bar{x} - \xi_j)^T
+\Lambda_n & = \Lambda_j + \sum_{i=1}^Nz_{ij}(x_i - \bar{x})(x_i - \bar{x})^T + \frac{n_j\kappa_j}{\kappa_j + n_j}(\bar{x} - \xi_j)(\bar{x} - \xi_j)^T
 \end{align*}
 $$
 
