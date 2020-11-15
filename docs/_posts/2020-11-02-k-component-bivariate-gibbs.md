@@ -15,11 +15,11 @@ $p(x|\theta) = \sum_{j=1}^K\pi_j\phi_{\theta_j}(x)$ except that $\phi_{\theta_j}
 
 $$
 \begin{align*}
-\phi_{\theta_j}(x) & = \frac{1}{\sqrt{2\pi\left|\Sigma_j\right|}}\exp^{\frac{1}{2}(x-\mu_j)^T\Sigma^{-1}(x-\mu_j)}
+\phi_{\theta_j}(x) & = \frac{1}{\sqrt{2\pi\left|\Sigma_j\right|}}\exp^{\frac{1}{2}(x-\pmb{\mu_j})^T\Sigma^{-1}(x-\pmb{\mu_j})}
 \end{align*}
 $$
 
-We can generate our data using a similar method as before, except we extend $\mu_j$ to the vector $\pmb{\mu_j}$ and 
+We can generate our data using a similar method as before, except we extend $\pmb{\mu_j}$ to the vector $\pmb{\pmb{\mu_j}}$ and 
 $\sigma_j$ becomes the covariance matrix $\Sigma_j$.
 
 ```python
@@ -74,14 +74,14 @@ fig.show()
 
 ## Prior Distributions
 
-Extending our model to the multivariate case requires changes in our prior and posterior distributions. Our new prior distributions for $\pmb{\mu_j}$ and $\Sigma_j$ are extensions of the univariate Inverse-Gamma and Normal distributions. We can define the joint prior over $p(\pmb{\mu_j}, \Sigma_j)$ by the Normal-Inverse-Wishart Distribution which is conjugate to the multivariate Normal. As with our other models, we assume independence between $\pmb{\mu_j}$ and $\Sigma_j$. 
+Extending our model to the multivariate case requires changes in our prior and posterior distributions. Our new prior distributions for $\pmb{\pmb{\mu_j}}$ and $\Sigma_j$ are extensions of the univariate Inverse-Gamma and Normal distributions. We can define the joint prior over $p(\pmb{\pmb{\mu_j}}, \Sigma_j)$ by the Normal-Inverse-Wishart Distribution which is conjugate to the multivariate Normal. As with our other models, we assume independence between $\pmb{\pmb{\mu_j}}$ and $\Sigma_j$. 
 
 $$
 \begin{align*}
-p(\Sigma_j) & \sim W^{-1}(v_j, \Lambda_j)\\
-p(\pmb{\mu_j}|\Sigma_j) & \sim N(\pmb{\xi_j}, \frac{\Sigma_j}{\kappa_j})\\
-p(\pmb{\mu_j}, \Sigma_j) & \sim NIW(\pmb{\xi_j}, \kappa_j, \Lambda_j, v_j)\\
-& \propto \left|\Sigma_j\right|^{-\frac{v_j + d}{2}-1}\exp\left(-\frac{1}{2}tr(\Lambda_j\Sigma_j^{-1})- \frac{\kappa_j}{2}(\bar{x} - \xi_j)^T\Sigma_j^{-1}(\bar{x} - \xi_j)\right)
+p(\Sigma_j) & \sim W^{-1}(v_j, \Lambda_o)\\
+p(\pmb{\mu_j}|\Sigma_j) & \sim N(\pmb{\xi_o}, \frac{\Sigma_j}{\kappa_o})\\
+p(\pmb{\mu_j}, \Sigma_j) & \sim NIW(\pmb{\xi_o}, \kappa_o, \Lambda_o, v_j)\\
+& \propto \left|\Sigma_j\right|^{-\frac{v_j + d}{2}-1}\exp\left(-\frac{1}{2}tr(\Lambda_o\Sigma_j^{-1})- \frac{\kappa_o}{2}(\pmb{\bar{x}} - \pmb{\xi_o})^T\Sigma_j^{-1}(\pmb{\bar{x}} - \pmb{\xi_o})\right)
 \end{align*}
 $$
 
@@ -107,13 +107,21 @@ which leads to the conditional density
 
 $$
 \begin{align*}
-p(\mu_j, \Sigma_j | z, x, \pi) & \propto \prod_{i=1}^N\phi_{\theta_j}(x_i)^{z_j}\left|\Sigma_j\right|^{-\frac{v_j + d}{2}-1}\exp\left(-\frac{1}{2}tr(\Lambda_j\Sigma_j^{-1})- \frac{\kappa_j}{2}(\mu_j - \xi_j)^T\Sigma_j^{-1}(\mu_j - \xi_j)\right)\\
-& \propto \sum_{i=1}^N log(\phi_{\theta_j}(x_i)^{z_ij})\\
-& \propto \sum_{i=1}^N z_{ij}log\phi_{\theta_j}(x_i)\\
-& \propto \prod_{i=1}^N\left|\Sigma_j\right|^{-\frac{1}{2}}\exp\left(-\frac{1}{2}(x_i-\bar{x})^T\Sigma^{-1}(x_i-\bar{x})\right)\left|\Sigma_j\right|^{-\frac{v_j + d}{2}-1}\exp\left(-\frac{1}{2}tr(\Lambda_j\Sigma_j^{-1})- \frac{\kappa_j}{2}(\bar{x} - \xi_j)^T\Sigma_j^{-1}(\bar{x} - \xi_j)\right)\\
-& \propto \prod_{i=1}^N\left|\Sigma_j\right|^{-\frac{d+v_j}{2}-1}\exp\left(-\frac{1}{2}(x_i-\bar{x})^T\Sigma^{-1}(x_i-\bar{x}) - \frac{\kappa_j}{2}(\bar{x} - \xi_j)^T\Sigma_j^{-1}(\bar{x} - \xi_j) - \frac{1}{2}tr(\Lambda_j\Sigma_j^{-1})\right)\\
-p(\Sigma_j | \mu_j, z, x, \pi) & \propto \left|\Sigma_j\right|^{-\frac{n+d+v_j}{2}-1}\exp\left(-\frac{1}{2}tr(\Sigma_j^{-1}S) - \frac{1}{2}tr(\Lambda_j\Sigma_j^{-1}) - \frac{\kappa_j}{2}tr(\Sigma_j^{-1}G)\right)\\
-& \propto \left|\Sigma_j\right|^{-\frac{n+d+v_j}{2}-1}\exp\left(-\frac{1}{2}tr\left(\Sigma_j^{-1}\left(\Lambda_j + S + \kappa_j G\right)\right)\right)\\
+p(\pmb{\mu_j}, \Sigma_j | z, x, \pi) & \propto \prod_{i=1}^N\phi_{\theta_j}(\pmb{x_i})^{z_j}\left|\Sigma_j\right|^{-\frac{v_j + d}{2}-1}\exp\left(-\frac{1}{2}tr(\Lambda_o\Sigma_j^{-1})- \frac{\kappa_o}{2}(\pmb{\mu_j} - \pmb{\xi_o})^T\Sigma_j^{-1}(\pmb{\mu_j} - \pmb{\xi_o})\right)\\
+& \propto \prod_{i=1}^N\left|\Sigma_j\right|^{-\frac{1}{2}}\exp\left(-\frac{1}{2}(\pmb{x_i}-\pmb{\mu_j})^T\Sigma_j^{-1}(\pmb{x_i}-\pmb{\mu_j})\right)\left|\Sigma_j\right|^{-\frac{v_j + d}{2}-1}\exp\left(-\frac{1}{2}tr(\Lambda_o\Sigma_j^{-1})- \frac{\kappa_o}{2}(\pmb{\mu_j} - \pmb{\xi_o})^T\Sigma_j^{-1}(\pmb{\mu_j} - \pmb{\xi_o})\right)\\
+& \propto \left|\Sigma_j\right|^{-\frac{d+v_j+n_j}{2}-1}\exp\left(-\frac{1}{2}\sum_{i=1}^N(\pmb{x_i}-\pmb{\mu_j})^T\Sigma_j^{-1}(\pmb{x_i}-\pmb{\mu_j}) - \frac{\kappa_o}{2}(\pmb{\mu_j} - \pmb{\xi_o})^T\Sigma_j^{-1}(\pmb{\mu_j} - \pmb{\xi_o}) - \frac{1}{2}tr(\Lambda_o\Sigma_j^{-1})\right)\\
+p(\pmb{\mu_j} | \Sigma_j, z, x, \pi) & \propto \exp \left(-\frac{1}{2}\left[\sum_{i=1}^N \color{red}{\pmb{x_i}^T\Sigma_j^{-1}\pmb{x_i}} - 2\pmb{x_i}^T\Sigma_j^{-1}\pmb{\mu_j} + \pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j}\right] - \frac{\kappa_o}{2}\left[\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j} - 2\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\xi_o} + \color{red}{\pmb{\xi_o}^T\Sigma_j^{-1}\pmb{\xi_o}}\right]\right)\\
+& \propto \exp \left(-\frac{1}{2}\left[(n_j+\kappa_o)\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j} + 2\sum_{i=1}^N\pmb{x_i}^T\Sigma_j^{-1}\pmb{\mu_j} + 2\kappa_o\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\xi_o}\right]\right)\\
+& \propto \exp \left(-\frac{1}{2}\left[(n_j+\kappa_o)\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j} + 2(n\pmb{\bar{x}} - \kappa_o\pmb{\xi_o})\Sigma_j^{-1}\pmb{\mu_j}\right]\right)\\
+& \propto \exp \left(-\frac{n_j+\kappa_o}{2}\left(\pmb{\mu_j} - \frac{n_j\pmb{\bar{x}} + \kappa_o\pmb{\xi_o}}{n_j + \kappa_o}\right)\Sigma_j^{-1}\left(\pmb{\mu_j} - \frac{n_j\pmb{\bar{x}} + \kappa_o\pmb{\xi_o}}{n_j + \kappa_o}\right)^T\right)\\
+p(\pmb{\mu_j} | \Sigma_j, z, x, \pi) & \sim N\left(\frac{n_j\pmb{\bar{x}} + \kappa_o\pmb{\xi_o}}{n_j + \kappa_o}, \frac{\Sigma_j}{n_j+\kappa_o}\right)
+\\
+\\
+\\
+\\
+\\
+p(\Sigma_j | \pmb{\pmb{\mu_j}}, z, x, \pi) & \propto \left|\Sigma_j\right|^{-\frac{n+d+v_j}{2}-1}\exp\left(-\frac{1}{2}tr(\Sigma_j^{-1}S) - \frac{1}{2}tr(\Lambda_o\Sigma_j^{-1}) - \frac{\kappa_o}{2}tr(\Sigma_j^{-1}G)\right)\\
+& \propto \left|\Sigma_j\right|^{-\frac{n+d+v_j}{2}-1}\exp\left(-\frac{1}{2}tr\left(\Sigma_j^{-1}\left(\Lambda_o + S + \kappa_o G\right)\right)\right)\\
 \end{align*}
 $$
 
@@ -121,14 +129,14 @@ This results in simply multiplying our joint prior density with a multivariate n
 
 $$
 \begin{align*}
-\mu_n & = \frac{\kappa_j}{\kappa_j + n_j}\xi_j + \frac{n_j}{\kappa_j + n_j}\bar{x}_j\\
-\kappa_n & = \kappa_j + n_j\\
+\mu_n & = \frac{\kappa_o}{\kappa_o + n_j}\pmb{\xi_o} + \frac{n_j}{\kappa_o + n_j}\pmb{\bar{x}}_j\\
+\kappa_n & = \kappa_o + n_j\\
 v_n & = v_j + n_j\\
-\Lambda_n & = \Lambda_j + \sum_{i=1}^Nz_{ij}(x_i - \bar{x})(x_i - \bar{x})^T + \frac{n_j\kappa_j}{\kappa_j + n_j}(\bar{x} - \xi_j)(\bar{x} - \xi_j)^T
+\Lambda_n & = \Lambda_o + \sum_{i=1}^Nz_{ij}(\pmb{x_i} - \pmb{\mu_j})(\pmb{x_i} - \pmb{\mu_j})^T + \frac{n_j\kappa_o}{\kappa_o + n_j}(\pmb{\bar{x}} - \pmb{\xi_o})(\pmb{\bar{x}} - \pmb{\xi_o})^T
 \end{align*}
 $$
 
-Samples from the joint conditional distribution $p(\mu_j, \Sigma_j | z, x, \pi)$ can be obtained by first sampling 
+Samples from the joint conditional distribution $p(\pmb{\mu_j}, \Sigma_j | z, x, \pi)$ can be obtained by first sampling 
 from $p(\Sigma_j) \sim W^{-1}(v_n, \Lambda_n)$, then sampling $p(\pmb{\mu}_j) \sim N(\pmb{\mu}_n, \frac{\Sigma_j}{\kappa_n})$
 
 ## Fitting the Model
