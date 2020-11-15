@@ -52,7 +52,7 @@ phi = [.3, .5, .2]
 mu = np.array([[3,5], [0,-1], [-3,5]])
 cov_1 = np.array([[2.0, 0.3], [0.3, 0.5]])
 cov_2 = np.array([[3.0,.4], [.4,3.0]])    
-cov_3 = np.array([[1.7,-1], [-.7,1.7]])
+cov_3 = np.array([[2,-.7], [-.7,1.7]])
 cov = np.stack((cov_1, cov_2, cov_3), axis = 0)
 
 data = data_gen(mu, cov, phi, 500)
@@ -78,14 +78,14 @@ Extending our model to the multivariate case requires changes in our prior and p
 
 $$
 \begin{align*}
-p(\Sigma_j) & \sim W^{-1}(v_j, \Lambda_o)\\
+p(\Sigma_j) & \sim W^{-1}(v_o, \Lambda_o)\\
 p(\pmb{\mu_j}|\Sigma_j) & \sim N(\pmb{\xi_o}, \frac{\Sigma_j}{\kappa_o})\\
-p(\pmb{\mu_j}, \Sigma_j) & \sim NIW(\pmb{\xi_o}, \kappa_o, \Lambda_o, v_j)\\
-& \propto \left|\Sigma_j\right|^{-\frac{v_j + d}{2}-1}\exp\left(-\frac{1}{2}tr(\Lambda_o\Sigma_j^{-1})- \frac{\kappa_o}{2}(\pmb{\bar{x}} - \pmb{\xi_o})^T\Sigma_j^{-1}(\pmb{\bar{x}} - \pmb{\xi_o})\right)
+p(\pmb{\mu_j}, \Sigma_j) & \sim NIW(\pmb{\xi_o}, \kappa_o, \Lambda_o, v_o)\\
+& \propto \left|\Sigma_j\right|^{-\frac{v_o + d}{2}-1}\exp\left(-\frac{1}{2}tr(\Lambda_o\Sigma_j^{-1})- \frac{\kappa_o}{2}(\pmb{\mu_j} - \pmb{\xi_o})^T\Sigma_j^{-1}(\pmb{\mu_j} - \pmb{\xi_o})\right)
 \end{align*}
 $$
 
-## Complete Conditional for $p(\pmb{\mu_j}, \Sigma_j)$
+## Complete Conditional for $\pmb{\mu_j}$ and $\Sigma_j$
 
 We know from our last post that 
 
@@ -107,41 +107,73 @@ which leads to the conditional density
 
 $$
 \begin{align*}
-p(\pmb{\mu_j}, \Sigma_j | z, x, \pi) & \propto \prod_{i=1}^N\phi_{\theta_j}(\pmb{x_i})^{z_j}\left|\Sigma_j\right|^{-\frac{v_j + d}{2}-1}\exp\left(-\frac{1}{2}tr(\Lambda_o\Sigma_j^{-1})- \frac{\kappa_o}{2}(\pmb{\mu_j} - \pmb{\xi_o})^T\Sigma_j^{-1}(\pmb{\mu_j} - \pmb{\xi_o})\right)\\
-& \propto \prod_{i=1}^N\left|\Sigma_j\right|^{-\frac{1}{2}}\exp\left(-\frac{1}{2}(\pmb{x_i}-\pmb{\mu_j})^T\Sigma_j^{-1}(\pmb{x_i}-\pmb{\mu_j})\right)\left|\Sigma_j\right|^{-\frac{v_j + d}{2}-1}\exp\left(-\frac{1}{2}tr(\Lambda_o\Sigma_j^{-1})- \frac{\kappa_o}{2}(\pmb{\mu_j} - \pmb{\xi_o})^T\Sigma_j^{-1}(\pmb{\mu_j} - \pmb{\xi_o})\right)\\
-& \propto \left|\Sigma_j\right|^{-\frac{d+v_j+n_j}{2}-1}\exp\left(-\frac{1}{2}\sum_{i=1}^N(\pmb{x_i}-\pmb{\mu_j})^T\Sigma_j^{-1}(\pmb{x_i}-\pmb{\mu_j}) - \frac{\kappa_o}{2}(\pmb{\mu_j} - \pmb{\xi_o})^T\Sigma_j^{-1}(\pmb{\mu_j} - \pmb{\xi_o}) - \frac{1}{2}tr(\Lambda_o\Sigma_j^{-1})\right)\\
-p(\pmb{\mu_j} | \Sigma_j, z, x, \pi) & \propto \exp \left(-\frac{1}{2}\left[\sum_{i=1}^N \color{red}{\pmb{x_i}^T\Sigma_j^{-1}\pmb{x_i}} - 2\pmb{x_i}^T\Sigma_j^{-1}\pmb{\mu_j} + \pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j}\right] - \frac{\kappa_o}{2}\left[\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j} - 2\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\xi_o} + \color{red}{\pmb{\xi_o}^T\Sigma_j^{-1}\pmb{\xi_o}}\right]\right)\\
-& \propto \exp \left(-\frac{1}{2}\left[(n_j+\kappa_o)\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j} + 2\sum_{i=1}^N\pmb{x_i}^T\Sigma_j^{-1}\pmb{\mu_j} + 2\kappa_o\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\xi_o}\right]\right)\\
-& \propto \exp \left(-\frac{1}{2}\left[(n_j+\kappa_o)\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j} + 2(n\pmb{\bar{x}} - \kappa_o\pmb{\xi_o})\Sigma_j^{-1}\pmb{\mu_j}\right]\right)\\
-& \propto \exp \left(-\frac{n_j+\kappa_o}{2}\left(\pmb{\mu_j} - \frac{n_j\pmb{\bar{x}} + \kappa_o\pmb{\xi_o}}{n_j + \kappa_o}\right)\Sigma_j^{-1}\left(\pmb{\mu_j} - \frac{n_j\pmb{\bar{x}} + \kappa_o\pmb{\xi_o}}{n_j + \kappa_o}\right)^T\right)\\
-p(\pmb{\mu_j} | \Sigma_j, z, x, \pi) & \sim N\left(\frac{n_j\pmb{\bar{x}} + \kappa_o\pmb{\xi_o}}{n_j + \kappa_o}, \frac{\Sigma_j}{n_j+\kappa_o}\right)
-\\
-\\
-\\
-\\
-\\
-p(\Sigma_j | \pmb{\pmb{\mu_j}}, z, x, \pi) & \propto \left|\Sigma_j\right|^{-\frac{n+d+v_j}{2}-1}\exp\left(-\frac{1}{2}tr(\Sigma_j^{-1}S) - \frac{1}{2}tr(\Lambda_o\Sigma_j^{-1}) - \frac{\kappa_o}{2}tr(\Sigma_j^{-1}G)\right)\\
-& \propto \left|\Sigma_j\right|^{-\frac{n+d+v_j}{2}-1}\exp\left(-\frac{1}{2}tr\left(\Sigma_j^{-1}\left(\Lambda_o + S + \kappa_o G\right)\right)\right)\\
+p(\pmb{\mu_j}, \Sigma_j | z, x, \pi) & \propto \prod_{i=1}^N\phi_{\theta_j}(\pmb{x_i})^{z_j}\left|\Sigma_j\right|^{-\frac{v_o + d}{2}-1}\exp\left(-\frac{1}{2}\text{tr}(\Lambda_o\Sigma_j^{-1})- \frac{\kappa_o}{2}(\pmb{\mu_j} - \pmb{\xi_o})^T\Sigma_j^{-1}(\pmb{\mu_j} - \pmb{\xi_o})\right)\\
+& \propto \prod_{i=1}^N\left|\Sigma_j\right|^{-\frac{1}{2}}\exp\left(-\frac{1}{2}(\pmb{x_i}-\pmb{\mu_j})^T\Sigma_j^{-1}(\pmb{x_i}-\pmb{\mu_j})\right)\left|\Sigma_j\right|^{-\frac{v_o + d}{2}-1}\exp\left(-\frac{1}{2}\text{tr}(\Lambda_o\Sigma_j^{-1})- \frac{\kappa_o}{2}(\pmb{\mu_j} - \pmb{\xi_o})^T\Sigma_j^{-1}(\pmb{\mu_j} - \pmb{\xi_o})\right)\\
+& \propto \left|\Sigma_j\right|^{-\frac{d+v_o+n_j}{2}-1}\exp\left(-\frac{1}{2}\sum_{i=1}^N(\pmb{x_i}-\pmb{\mu_j})^T\Sigma_j^{-1}(\pmb{x_i}-\pmb{\mu_j}) - \frac{\kappa_o}{2}(\pmb{\mu_j} - \pmb{\xi_o})^T\Sigma_j^{-1}(\pmb{\mu_j} - \pmb{\xi_o}) - \frac{1}{2}\text{tr}(\Lambda_o\Sigma_j^{-1})\right)\\
 \end{align*}
 $$
 
-This results in simply multiplying our joint prior density with a multivariate normal. Because of conjugacy, we know this results in a posterior density of the same family (normal inverse-Wishart) with parameters:
+Now we can condition on $\pmb{\mu_j}$ to get our first complete conditional:
 
 $$
 \begin{align*}
-\mu_n & = \frac{\kappa_o}{\kappa_o + n_j}\pmb{\xi_o} + \frac{n_j}{\kappa_o + n_j}\pmb{\bar{x}}_j\\
-\kappa_n & = \kappa_o + n_j\\
-v_n & = v_j + n_j\\
-\Lambda_n & = \Lambda_o + \sum_{i=1}^Nz_{ij}(\pmb{x_i} - \pmb{\mu_j})(\pmb{x_i} - \pmb{\mu_j})^T + \frac{n_j\kappa_o}{\kappa_o + n_j}(\pmb{\bar{x}} - \pmb{\xi_o})(\pmb{\bar{x}} - \pmb{\xi_o})^T
+p(\pmb{\mu_j} | \Sigma_j, z, x, \pi) & \propto \exp \left(-\frac{1}{2}\left[\sum_{i=1}^N z_{ij}\color{red}{\pmb{x_i}^T\Sigma_j^{-1}\pmb{x_i}} - z_{ij}2\pmb{x_i}^T\Sigma_j^{-1}\pmb{\mu_j} + z_{ij}\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j}\right] - \frac{\kappa_o}{2}\left[\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j} - 2\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\xi_o} + \color{red}{\pmb{\xi_o}^T\Sigma_j^{-1}\pmb{\xi_o}}\right]\right)\\
+& \propto \exp \left(-\frac{1}{2}\left[(n_j+\kappa_o)\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j} + 2\sum_{i=1}^Nz_{ij}\pmb{x_i}^T\Sigma_j^{-1}\pmb{\mu_j} + 2\kappa_o\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\xi_o}\right]\right)\\
+& \propto \exp \left(-\frac{1}{2}\left[(n_j+\kappa_o)\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j} + 2(n_j\pmb{\bar{x}} - \kappa_o\pmb{\xi_o})\Sigma_j^{-1}\pmb{\mu_j}\right]\right)\\
+& \propto \exp \left(-\frac{n_j+\kappa_o}{2}\left(\pmb{\mu_j} - \frac{n_j\pmb{\bar{x}} + \kappa_o\pmb{\xi_o}}{n_j + \kappa_o}\right)^T\Sigma_j^{-1}\left(\pmb{\mu_j} - \frac{n_j\pmb{\bar{x}} + \kappa_o\pmb{\xi_o}}{n_j + \kappa_o}\right)\right)\\
+p(\pmb{\mu_j} | \Sigma_j, z, x, \pi) & \sim N\left(\frac{n_j\pmb{\bar{x}} + \kappa_o\pmb{\xi_o}}{n_j + \kappa_o}, \frac{\Sigma_j}{n_j+\kappa_o}\right)
 \end{align*}
 $$
 
-Samples from the joint conditional distribution $p(\pmb{\mu_j}, \Sigma_j | z, x, \pi)$ can be obtained by first sampling 
-from $p(\Sigma_j) \sim W^{-1}(v_n, \Lambda_n)$, then sampling $p(\pmb{\mu}_j) \sim N(\pmb{\mu}_n, \frac{\Sigma_j}{\kappa_n})$
+It's worth noting that mean of the update for $\pmb{\mu_j}$ is a weighted average of the prior mean $\pmb{\xi_o}$ and the sample mean $\pmb{\bar{x}}$. The less data we have in component $j$ the more weight is put on the prior. We choose our prior such that $\pmb{\xi_o} = \pmb{0}$ and $\kappa_o = 0$ to give the following update function:
+
+```python
+def update_mu(data, z_mat, cov):
+    """
+    Sample from Posterior Conditional for mu
+    """
+    mu = []
+    n_j =  np.sum(z_mat, axis=0)
+    for j in range(len(cov)):
+        cov_o = cov[j] / n_j[j]
+        x_bar = data[z_mat[:,j] == 1, :].mean(axis=0)
+        sample = multivariate_normal(x_bar, cov_o).rvs()
+        mu.append(sample)
+    
+    return mu
+```
+
+Similarly we can condition on $\Sigma_j$ to get our next complete conditional. Here its helpful to remember the "trace trick" where $\pmb{x}^TA\pmb{x} = \text{tr}(\pmb{x}^TA\pmb{x}) = \text{tr}(A\pmb{x}\pmb{x}^T)$. We will also let $S = \sum_{i=1}^Nz_{ij}(\pmb{x_i} - \pmb{\mu_j})(\pmb{x_i} - \pmb{\mu_j})^T$ and $G = (\pmb{\mu_j} - \pmb{\xi_o})(\pmb{\mu_j} - \pmb{\xi_o})^T\$
+
+$$
+\begin{align*}
+p(\Sigma_j | \pmb{\mu_j}, z, x, \pi) & \propto \left|\Sigma_j\right|^{-\frac{n_j+d+v_o}{2}-1}\exp\left(-\frac{1}{2}\text{tr}(\Sigma_j^{-1}S) - \frac{1}{2}\text{tr}(\Lambda_o\Sigma_j^{-1}) - \frac{\kappa_o}{2}\text{tr}(\Sigma_j^{-1}G)\right)\\
+& \propto \left|\Sigma_j\right|^{-\frac{n_j+d+v_o}{2}-1}\exp\left(-\frac{1}{2}\text{tr}\left(\Sigma_j^{-1}\left(\Lambda_o + S + \kappa_o G\right)\right)\right)\\
+p(\Sigma_j | \pmb{\mu_j}, z, x, \pi) & \sim W^{-1}\left(n_j + v_o, \Lambda_o + \sum_{i=1}^Nz_{ij}(\pmb{x_i} - \pmb{\mu_j})(\pmb{x_i} - \pmb{\mu_j})^T + \kappa_o(\pmb{\mu_j} - \pmb{\xi_o})(\pmb{\mu_j} - \pmb{\xi_o})^T\right)
+\end{align*}
+$$
+
+Here we choose our prior such that $\Lambda_o = \pmb{I}$ giving the following update function for $\Sigma_j$
+
+```python
+def update_cov(data, z_mat, mu):
+    """
+    Sample from Posterior Conditional for sigma
+    """
+    n_j = np.sum(z_mat, axis=0)
+    cov = []
+    for j in range(len(mu)):
+        y = data[z_mat[:,j] == 1, :]
+        y_bar = y.mean(axis=0)
+        s_squares = np.dot(np.transpose(y - mu[j]), y - mu[j])
+        cov.append(invwishart(n_j[j], s_squares + np.eye(2)).rvs())
+
+    return cov
+```
 
 ## Fitting the Model
 
-The majority of our code is the same as in previous posts. The major differences deal with accounting for the new shapes of data along with our new multivariate distributions.
+The rest of our code is the mostly same as in previous posts. The major differences deal with accounting for the new shapes of data along with our new multivariate distributions.
 
 ```python
 def update_pi(alpha_vec, z_mat):
@@ -165,34 +197,6 @@ def update_z(data, mu, cov, pi):
     for i in range(data.shape[0]):
         out[i,] = multinomial(1, pi_i[i,:])
     return out
-
-def update_cov(data, z_mat, mu):
-    """
-    Sample from Posterior Conditional for sigma
-    """
-    n_j = np.sum(z_mat, axis=0)
-    cov = []
-    for j in range(len(mu)):
-        y = data[z_mat[:,j] == 1, :]
-        y_bar = y.mean(axis=0)
-        s_squares = np.dot(np.transpose(y - y_bar), y - y_bar)
-        cov.append(invwishart(n_j[j], s_squares + np.eye(2)).rvs())
-
-    return cov
-
-def update_mu(data, z_mat, cov):
-    """
-    Sample from Posterior Conditional for mu
-    """
-    mu = []
-    n_j =  np.sum(z_mat, axis=0)
-    for j in range(len(cov)):
-        cov_j = cov[j] / n_j[j]
-        y_bar = data[z_mat[:,j] == 1, :].mean(axis=0)
-        sample = multivariate_normal(y_bar, cov_j).rvs()
-        mu.append(sample)
-    
-    return mu
 
 def gibbs(data, iters, burnin, k):
     """
