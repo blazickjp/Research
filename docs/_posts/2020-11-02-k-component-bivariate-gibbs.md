@@ -113,7 +113,7 @@ p(\pmb{\mu_j}, \Sigma_j | z, x, \pi) & \propto \prod_{i=1}^N\phi_{\theta_j}(\pmb
 \end{align*}
 $$
 
-Now we can condition on $\pmb{\mu_j}$ to get our first complete conditional:
+Now we can condition on $\pmb{\mu_j}$ to get our first complete conditional. The terms in red can be absorbed into a constant term due to conditioning.
 
 $$
 \begin{align*}
