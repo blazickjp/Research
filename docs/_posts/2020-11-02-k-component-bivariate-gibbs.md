@@ -117,7 +117,7 @@ Now we can condition on $\pmb{\mu_j}$ to get our first complete conditional:
 
 $$
 \begin{align*}
-p(\pmb{\mu_j} | \Sigma_j, z, x, \pi) & \propto \exp \left(-\frac{1}{2}\left[\sum_{i=1}^N z_{ij}\color{red}{\pmb{x_i}^T\Sigma_j^{-1}\pmb{x_i}} - z_{ij}2\pmb{x_i}^T\Sigma_j^{-1}\pmb{\mu_j} + z_{ij}\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j}\right] - \frac{\kappa_o}{2}\left[\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j} - 2\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\xi_o} + \color{red}{\pmb{\xi_o}^T\Sigma_j^{-1}\pmb{\xi_o}}\right]\right)\\
+p(\pmb{\mu_j} | \Sigma_j, z, x, \pi) & \propto \exp \left(-\frac{1}{2}\left[\sum_{i=1}^N \color{red}{z_{ij}\pmb{x_i}^T\Sigma_j^{-1}\pmb{x_i}} - z_{ij}2\pmb{x_i}^T\Sigma_j^{-1}\pmb{\mu_j} + z_{ij}\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j}\right] - \frac{\kappa_o}{2}\left[\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j} - 2\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\xi_o} + \color{red}{\pmb{\xi_o}^T\Sigma_j^{-1}\pmb{\xi_o}}\right]\right)\\
 & \propto \exp \left(-\frac{1}{2}\left[(n_j+\kappa_o)\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j} + 2\sum_{i=1}^Nz_{ij}\pmb{x_i}^T\Sigma_j^{-1}\pmb{\mu_j} + 2\kappa_o\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\xi_o}\right]\right)\\
 & \propto \exp \left(-\frac{1}{2}\left[(n_j+\kappa_o)\pmb{\mu_j}^T\Sigma_j^{-1}\pmb{\mu_j} + 2(n_j\pmb{\bar{x}} - \kappa_o\pmb{\xi_o})\Sigma_j^{-1}\pmb{\mu_j}\right]\right)\\
 & \propto \exp \left(-\frac{n_j+\kappa_o}{2}\left(\pmb{\mu_j} - \frac{n_j\pmb{\bar{x}} + \kappa_o\pmb{\xi_o}}{n_j + \kappa_o}\right)^T\Sigma_j^{-1}\left(\pmb{\mu_j} - \frac{n_j\pmb{\bar{x}} + \kappa_o\pmb{\xi_o}}{n_j + \kappa_o}\right)\right)\\
