@@ -9,7 +9,6 @@ function isEnd(mdp::TransportationMDP, state)
     return state == mdp.N
 end
 
-
 function actions(mdp::TransportationMDP, state)
     result = String[]
     if state +1 <= mdp.N
@@ -36,25 +35,27 @@ function states(mdp::TransportationMDP)
     return range(1, stop=mdp.N)
 end
 
-function Q(mdp::TransportationMDP, state, action, value)
-    q = sum(prob * (reward + mdp.discount * value[Int(newState)]) for (newState, prob, reward) in succProbReward(state, action))
-    return q
-end
 
 function valueIteration(mdp::TransportationMDP)
+    # Initialize value and policy arrays
     value =  Array{Float64}(undef, length(states(mdp)))
     p = Array{String}(undef, length(states(mdp)))
     for (i, state) in enumerate(states(mdp))
         value[i] = 0
     end
-
+    # Q Function
+    function Q(mdp::TransportationMDP, state, action)
+        q = sum(prob * (reward + mdp.discount * value[Int(newState)]) for (newState, prob, reward) in succProbReward(state, action))
+        return q
+    end
+    # This should be until convergence
     for j in 1:10
         vNew =  Array{Float64}(undef, length(states(mdp)))
         for (i, state) in enumerate(states(mdp))
             if isEnd(mdp, state)
                 vNew[i] = 0
             else 
-                vNew[i] = maximum([Q(mdp, state, action, value) for action in actions(mdp, state)])
+                vNew[i] = maximum([Q(mdp, state, action) for action in actions(mdp, state)])
             end
         end
         value = vNew
@@ -64,7 +65,7 @@ function valueIteration(mdp::TransportationMDP)
             if isEnd(mdp, state)
                 p[i] = "None"
             else
-                p[i] = maximum((Q(mdp, state, action, value), action) for action in actions(mdp, state))[2]
+                p[i] = maximum((Q(mdp, state, action), action) for action in actions(mdp, state))[2]
             end
         end
     end
@@ -78,5 +79,3 @@ test = TransportationMDP(10, 1.0)
 
 # Runs MDP and outputs Optimal Policy with V(S)
 valueIteration(test)
-
-|
