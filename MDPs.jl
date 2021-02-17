@@ -9,9 +9,6 @@ function isEnd(mdp::TransportationMDP, state)
     return state == mdp.N
 end
 
-function startState(mdp::TransportationMDP)
-    return 1
-end
 
 function actions(mdp::TransportationMDP, state)
     result = String[]
@@ -79,8 +76,7 @@ end
 
 test = TransportationMDP(10, 1.0)
 
-fieldnames(test)
-
-for i ∈ s
+# Runs MDP and outputs Optimal Policy with V(S)
+valueIteration(test)
 
 |
