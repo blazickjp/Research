@@ -1,8 +1,9 @@
 using MLDatasets
 using Flux
 using DataFrames
-using Plots
+using Random
 using RDatasets
+using CategoricalArrays
 # Quick Example to introduce Params(): Linear Regression
 # random initial parameters
 β = rand(2,1)
@@ -25,31 +26,27 @@ loss(x,y)
 
 loss(x, y)
 
-
 ## Neural Network with Autodiff
 iris = dataset("datasets", "iris")
-y = DataFrames.categorical(iris["Species"])
-y =  map(y -> Int(y), CategoricalArrays.order(y.pool)[y.refs])
+y = DataFrames.categorical(iris[!,"Species"])
+y =  map(levelcode, y)
 
 W_1 = randn(4,25)
 b_1 = randn(1)
 W_2 = randn(25,3)
 b_2 = randn(1)
 
-function f(x)
+function f̂(x)
     layer_1 = tanh.(x' * W_1 .+ b_1)
     out_layer = softmax((layer_1 * W_2 .+ b_2)')
     return out_layer
 end
 
-function loss(x, y)
-    -log(f(x)[y])
-end
+
 total_loss = 0
 for i ∈ 1:(nrow(iris))
     local x = Array(iris[i:4,1:4])'
-    local y_act = y[i]
-
+    local y_act = y[i:i+4]
     Δ = gradient(() -> loss(x, y_act), params(W_1,W_2,b_1,b_2))
     
     Ŵ_1 = Δ[W_1]
