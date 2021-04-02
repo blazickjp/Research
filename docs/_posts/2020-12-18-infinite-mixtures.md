@@ -6,7 +6,7 @@ categories: mypost
 
 ## Extending to Infinite Components
 
-After working with mixture models, it's natural to wonder how one should best determine the correct number of components to include in our models. One method for determining this is to extend our finite mixture model to the case of infinite components. Infinite components is going to require an infinite probability vector $\pi$ and typically when thinking about a Dirichlet Distribution, we have $K << N$. Nut we now might ask ourselves what happens when $K>>N$? We know that the number of unique groups in our sample $K^*$ will be less than $N$. To see what this may look like, we can generate $\pi \sim Dir\left(\frac{\alpha}{K}, ...\right)$ and then sample $Z \sim cat(\pi)$ with an arbitrarily large $K$ for increasing values of $N$. 
+After working with mixture models, it's natural to wonder how one should best determine the correct number of components to include in our models. One method for determining this is to extend our finite mixture model to the case of infinite components. Infinite components is going to require an infinite probability vector $\pi$ and typically when thinking about a Dirichlet Distribution, we have $K << N$. Now we now might ask ourselves what happens when $K>>N$? We know that the number of unique groups in our sample $K^*$ will be less than $N$. To see what this may look like, we can generate $\pi \sim Dir\left(\frac{\alpha}{K}, ...\right)$ and then sample $Z \sim cat(\pi)$ with an arbitrarily large $K$ for increasing values of $N$. 
 
 ```python
 K=1000
