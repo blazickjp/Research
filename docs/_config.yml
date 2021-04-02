@@ -16,5 +16,5 @@ twitter_username: JoeBlazick
 github_username:  blazickjp
 # Build settings
 # Testing
-theme: jekyll-theme-cayman
+
 markdown: kramdown
